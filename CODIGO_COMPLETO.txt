@@ -1,0 +1,2274 @@
+================================================================================
+index.html
+================================================================================
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <title>Mi Inventario</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <div id="appShell" class="app-shell" aria-live="polite">
+    <div id="loadingScreen" class="screen screen--centered is-active">
+      <div class="loading-card">
+        <div class="brand-mark">📦</div>
+        <h1>Cargando Mi Inventario</h1>
+        <p>Preparando la base de datos local…</p>
+        <div class="spinner" aria-label="Cargando"></div>
+      </div>
+    </div>
+
+    <div id="startScreen" class="screen screen--centered" hidden>
+      <section class="welcome-card">
+        <div class="brand-mark brand-mark--large">📦</div>
+        <p class="eyebrow">Inventario local</p>
+        <h1 id="startAppName">Mi Inventario</h1>
+        <p class="muted">Elige cómo quieres entrar.</p>
+        <div class="stack stack--lg">
+          <button class="btn btn--primary btn--xl" data-action="enter-client">👤 Modo cliente</button>
+          <button class="btn btn--dark btn--xl" data-action="open-admin-login">🔐 Modo administrador</button>
+        </div>
+      </section>
+    </div>
+
+    <div id="adminScreen" class="screen" hidden>
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Administrador</p>
+          <h1 id="adminAppName">Mi Inventario</h1>
+        </div>
+        <div class="topbar__actions">
+          <button class="icon-btn" title="Configuración" aria-label="Configuración" data-action="open-settings">⚙️</button>
+          <button class="icon-btn" title="Salir" aria-label="Salir" data-action="logout-admin">🚪</button>
+        </div>
+      </header>
+
+      <main class="content">
+        <section id="dashboardSection" class="section-block">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Resumen</p>
+              <h2>Dashboard</h2>
+            </div>
+          </div>
+          <div id="dashboardCards" class="stats-grid"></div>
+        </section>
+
+        <section id="folderSection" class="section-block">
+          <div class="section-heading section-heading--wrap">
+            <div>
+              <p class="eyebrow">Organización</p>
+              <h2>Carpetas</h2>
+            </div>
+            <button class="btn btn--primary" data-action="create-folder">➕ Crear carpeta</button>
+          </div>
+
+          <div class="toolbar">
+            <label class="search-field">
+              <span>🔎</span>
+              <input id="folderSearchInput" type="search" placeholder="Buscar carpeta…" autocomplete="off">
+              <button class="search-clear" type="button" data-action="clear-folder-search" aria-label="Limpiar búsqueda">✕</button>
+            </label>
+          </div>
+
+          <div id="folderGrid" class="folder-grid"></div>
+        </section>
+      </main>
+    </div>
+
+    <div id="folderInventoryScreen" class="screen" hidden>
+      <header class="topbar topbar--sticky">
+        <div class="topbar__leading">
+          <button class="icon-btn" data-action="back-admin" aria-label="Volver">←</button>
+          <div>
+            <p class="eyebrow">Inventario</p>
+            <h1 id="folderInventoryTitle">Carpeta</h1>
+          </div>
+        </div>
+        <button class="btn btn--primary" data-action="create-product">➕ Añadir producto</button>
+      </header>
+
+      <main class="content">
+        <div class="toolbar toolbar--split">
+          <label class="search-field">
+            <span>🔎</span>
+            <input id="productSearchInput" type="search" placeholder="Buscar por nombre o código…" autocomplete="off">
+            <button class="search-clear" type="button" data-action="clear-product-search" aria-label="Limpiar búsqueda">✕</button>
+          </label>
+          <select id="productSortSelect" class="select-control" aria-label="Ordenar productos">
+            <option value="name-asc">Nombre A-Z</option>
+            <option value="name-desc">Nombre Z-A</option>
+            <option value="stock-desc">Mayor stock</option>
+            <option value="stock-asc">Menor stock</option>
+            <option value="updated-desc">Última modificación</option>
+          </select>
+        </div>
+        <div id="productGrid" class="product-grid"></div>
+      </main>
+    </div>
+
+    <div id="clientScreen" class="screen" hidden>
+      <header class="topbar topbar--sticky">
+        <div>
+          <p class="eyebrow">Modo cliente</p>
+          <h1 id="clientFolderTitle">Productos</h1>
+        </div>
+        <button class="icon-btn" title="Entrar como administrador" aria-label="Entrar como administrador" data-action="client-admin-unlock">🔒</button>
+      </header>
+      <main class="content">
+        <div class="toolbar">
+          <label class="search-field">
+            <span>🔎</span>
+            <input id="clientSearchInput" type="search" placeholder="Buscar producto…" autocomplete="off">
+            <button class="search-clear" type="button" data-action="clear-client-search" aria-label="Limpiar búsqueda">✕</button>
+          </label>
+        </div>
+        <div id="clientProductGrid" class="product-grid product-grid--client"></div>
+      </main>
+    </div>
+  </div>
+
+  <div id="modalRoot" class="modal-root" aria-live="assertive"></div>
+  <div id="toastRoot" class="toast-root" aria-live="polite"></div>
+
+  <input id="restoreFileInput" type="file" accept="application/json,.json" hidden>
+
+  <script src="js/namespace.js"></script>
+  <script src="js/database.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/folders.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/backup.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
+
+
+================================================================================
+css/styles.css
+================================================================================
+:root {
+  --bg: #f3f6fb;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --text: #172033;
+  --muted: #667085;
+  --border: #e4e7ec;
+  --primary: #4f46e5;
+  --primary-strong: #4338ca;
+  --danger: #dc2626;
+  --danger-soft: #fef2f2;
+  --warning: #d97706;
+  --warning-soft: #fff7ed;
+  --success: #15803d;
+  --success-soft: #f0fdf4;
+  --dark: #111827;
+  --shadow-sm: 0 8px 24px rgba(15, 23, 42, .07);
+  --shadow-md: 0 18px 50px rgba(15, 23, 42, .12);
+  --radius: 20px;
+  --radius-sm: 14px;
+  --tap: 52px;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { min-height: 100%; background: var(--bg); }
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top right, rgba(79,70,229,.08), transparent 28rem),
+    linear-gradient(180deg, #f8faff 0%, var(--bg) 100%);
+}
+button, input, select, textarea { font: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+img { display: block; max-width: 100%; }
+
+.app-shell { width: min(100%, 800px); min-height: 100vh; margin: 0 auto; background: rgba(255,255,255,.36); }
+.screen { min-height: 100vh; animation: fadeIn .2s ease; }
+.screen[hidden] { display: none !important; }
+.screen--centered { display: grid; place-items: center; padding: 24px; }
+
+.content { padding: 22px 18px calc(32px + env(safe-area-inset-bottom)); }
+.section-block + .section-block { margin-top: 28px; }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: calc(14px + env(safe-area-inset-top)) 18px 14px;
+  background: rgba(255,255,255,.94);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  z-index: 20;
+}
+.topbar--sticky { position: sticky; top: 0; }
+.topbar h1 { margin: 2px 0 0; font-size: clamp(1.25rem, 4vw, 1.75rem); line-height: 1.15; }
+.topbar__leading, .topbar__actions { display: flex; align-items: center; gap: 10px; }
+
+.welcome-card, .loading-card {
+  width: min(100%, 560px);
+  padding: clamp(28px, 6vw, 46px);
+  background: rgba(255,255,255,.96);
+  border: 1px solid rgba(228,231,236,.85);
+  border-radius: 30px;
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+.welcome-card h1, .loading-card h1 { margin: 8px 0; font-size: clamp(2rem, 8vw, 3.25rem); }
+.brand-mark { width: 72px; height: 72px; margin: 0 auto 14px; display: grid; place-items: center; border-radius: 22px; background: #eef2ff; font-size: 2.1rem; }
+.brand-mark--large { width: 92px; height: 92px; font-size: 2.8rem; border-radius: 28px; }
+.eyebrow { margin: 0; color: var(--primary); font-size: .78rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.muted { color: var(--muted); }
+
+.stack { display: grid; gap: 12px; }
+.stack--lg { gap: 14px; margin-top: 28px; }
+
+.section-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+.section-heading--wrap { flex-wrap: wrap; }
+.section-heading h2 { margin: 3px 0 0; font-size: 1.35rem; }
+
+.stats-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+.stat-card { padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); }
+.stat-card__icon { font-size: 1.5rem; }
+.stat-card__value { display: block; margin-top: 8px; font-size: 1.5rem; font-weight: 850; }
+.stat-card__label { margin-top: 3px; color: var(--muted); font-size: .85rem; line-height: 1.35; }
+.stat-card--wide { grid-column: 1 / -1; }
+
+.folder-grid, .product-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+
+.toolbar { display: flex; gap: 10px; margin-bottom: 16px; }
+.toolbar--split { flex-wrap: wrap; }
+.search-field { flex: 1 1 300px; min-height: var(--tap); display: flex; align-items: center; gap: 9px; padding: 0 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 5px 18px rgba(15,23,42,.04); }
+.search-field:focus-within { border-color: #a5b4fc; box-shadow: 0 0 0 4px rgba(79,70,229,.1); }
+.search-field input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font-size: 1rem; }
+.search-clear { width: 38px; height: 38px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); cursor: pointer; }
+.select-control { min-height: var(--tap); padding: 0 14px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); color: var(--text); }
+
+.loading-card p { margin-bottom: 22px; }
+.spinner { width: 36px; height: 36px; margin: 0 auto; border: 4px solid #e0e7ff; border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
+
+.empty-state { padding: 34px 20px; text-align: center; border: 1px dashed #cbd5e1; border-radius: var(--radius); background: rgba(255,255,255,.65); }
+.empty-state__icon { font-size: 2.2rem; }
+.empty-state h3 { margin: 10px 0 6px; }
+.empty-state p { margin: 0; color: var(--muted); }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (min-width: 640px) {
+  .content { padding-inline: 24px; }
+  .topbar { padding-inline: 24px; }
+  .stats-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .stat-card--wide { grid-column: span 3; }
+  .product-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+
+@media (max-width: 520px) {
+  .topbar { align-items: flex-start; }
+  .topbar > .btn { padding-inline: 12px; }
+  .stats-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .toolbar--split .select-control { width: 100%; }
+}
+
+
+================================================================================
+css/components.css
+================================================================================
+.btn {
+  min-height: var(--tap);
+  border: 0;
+  border-radius: 15px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease, opacity .12s ease;
+}
+.btn:active { transform: scale(.98); }
+.btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+.btn--primary { color: white; background: var(--primary); box-shadow: 0 10px 22px rgba(79,70,229,.2); }
+.btn--primary:hover { background: var(--primary-strong); }
+.btn--dark { color: white; background: var(--dark); }
+.btn--secondary { color: var(--text); background: #eef2f6; }
+.btn--danger { color: white; background: var(--danger); }
+.btn--ghost { color: var(--text); background: transparent; border: 1px solid var(--border); }
+.btn--xl { min-height: 60px; font-size: 1.05rem; }
+.btn--block { width: 100%; }
+
+.icon-btn {
+  min-width: var(--tap);
+  width: var(--tap);
+  height: var(--tap);
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: var(--surface);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.folder-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 14px;
+  padding: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+.folder-card__main { min-width: 0; cursor: pointer; }
+.folder-card__icon { width: 54px; height: 54px; display: grid; place-items: center; margin-bottom: 12px; border-radius: 16px; background: #eef2ff; font-size: 1.6rem; }
+.folder-card h3 { margin: 0 0 6px; font-size: 1.12rem; overflow-wrap: anywhere; }
+.folder-card p { margin: 0; color: var(--muted); font-size: .9rem; }
+.folder-meta { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 12px; color: var(--muted); font-size: .82rem; }
+.folder-card__actions { display: flex; flex-direction: column; gap: 8px; }
+.mini-btn { width: 46px; height: 46px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-2); cursor: pointer; }
+.mini-btn--danger { color: var(--danger); background: var(--danger-soft); border-color: #fecaca; }
+
+.product-card { overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+.product-card--out { opacity: .78; }
+.product-image-wrap { aspect-ratio: 4 / 3; background: linear-gradient(135deg,#eef2ff,#f8fafc); overflow: hidden; }
+.product-image { width: 100%; height: 100%; object-fit: cover; }
+.product-placeholder { width: 100%; height: 100%; display: grid; place-items: center; font-size: 3rem; color: #94a3b8; }
+.product-card__body { padding: 16px; }
+.product-card h3 { margin: 0 0 4px; font-size: 1.08rem; overflow-wrap: anywhere; }
+.product-code { color: var(--muted); font-size: .88rem; overflow-wrap: anywhere; }
+.product-info-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 13px; }
+.stock-value { font-weight: 850; font-size: 1.1rem; }
+.stock-badge { display: inline-flex; align-items: center; min-height: 30px; padding: 0 10px; border-radius: 999px; font-size: .72rem; font-weight: 900; letter-spacing: .04em; }
+.stock-badge--ok { color: var(--success); background: var(--success-soft); }
+.stock-badge--low { color: var(--warning); background: var(--warning-soft); }
+.stock-badge--out { color: var(--danger); background: var(--danger-soft); }
+.stock-stepper { display: grid; grid-template-columns: 50px 1fr 50px; align-items: center; gap: 8px; margin-top: 14px; }
+.stock-stepper button { height: 48px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-2); font-size: 1.35rem; font-weight: 900; cursor: pointer; }
+.stock-stepper strong { text-align: center; }
+.product-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.product-actions .btn { min-height: 48px; padding-inline: 10px; }
+
+.modal-backdrop { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 18px; background: rgba(15,23,42,.52); backdrop-filter: blur(5px); }
+.modal { width: min(100%, 600px); max-height: min(88vh, 820px); display: flex; flex-direction: column; overflow: hidden; background: var(--surface); border-radius: 24px; box-shadow: 0 28px 80px rgba(15,23,42,.28); animation: modalIn .17s ease; }
+.modal__header { padding: 20px 20px 12px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.modal__header h2 { margin: 0; font-size: 1.35rem; }
+.modal__close { width: 44px; height: 44px; border: 0; border-radius: 13px; background: var(--surface-2); cursor: pointer; }
+.modal__body { overflow-y: auto; padding: 4px 20px 20px; }
+.modal__footer { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px calc(16px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); background: var(--surface); }
+
+.form-grid { display: grid; gap: 15px; }
+.form-row { display: grid; gap: 7px; }
+.form-row label { font-weight: 800; font-size: .9rem; }
+.form-row input, .form-row select { width: 100%; min-height: 52px; padding: 0 13px; border: 1px solid #d0d5dd; border-radius: 14px; outline: none; background: white; color: var(--text); }
+.form-row input:focus, .form-row select:focus { border-color: #818cf8; box-shadow: 0 0 0 4px rgba(79,70,229,.1); }
+.form-hint { margin: 0; color: var(--muted); font-size: .78rem; }
+.password-field { display: grid; grid-template-columns: 1fr 52px; gap: 8px; }
+.password-field button { border: 1px solid var(--border); border-radius: 14px; background: var(--surface-2); cursor: pointer; }
+.checkbox-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 54px; padding: 8px 0; }
+.checkbox-row input { width: 22px; height: 22px; }
+.divider { height: 1px; background: var(--border); margin: 6px 0; }
+.settings-title { margin: 4px 0 0; font-size: 1rem; }
+.warning-box { padding: 13px; border: 1px solid #fed7aa; background: var(--warning-soft); color: #9a3412; border-radius: 14px; font-size: .9rem; line-height: 1.45; }
+
+.image-picker { display: grid; gap: 10px; }
+.image-preview { aspect-ratio: 4/3; display: grid; place-items: center; overflow: hidden; border: 1px dashed #cbd5e1; border-radius: 16px; background: var(--surface-2); color: var(--muted); }
+.image-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+.toast-root { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 2000; width: min(calc(100% - 32px), 420px); display: grid; gap: 9px; pointer-events: none; }
+.toast { padding: 13px 15px; display: flex; align-items: center; gap: 10px; background: #111827; color: white; border-radius: 14px; box-shadow: 0 18px 50px rgba(15,23,42,.25); animation: toastIn .2s ease; }
+.toast--success { background: #166534; }
+.toast--error { background: #991b1b; }
+.toast--warning { background: #92400e; }
+
+@keyframes modalIn { from { opacity: 0; transform: scale(.97) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 480px) {
+  .modal-backdrop { align-items: end; padding: 0; }
+  .modal { max-height: 92vh; border-radius: 24px 24px 0 0; }
+  .modal__footer { display: grid; grid-template-columns: 1fr 1fr; }
+  .folder-card { grid-template-columns: 1fr; }
+  .folder-card__actions { flex-direction: row; position: absolute; right: 14px; top: 14px; }
+}
+
+
+================================================================================
+js/namespace.js
+================================================================================
+// ========================================
+// NAMESPACE GLOBAL Y UTILIDADES
+// ========================================
+(function () {
+  'use strict';
+
+  const App = window.InventoryApp = window.InventoryApp || {};
+
+  App.VERSION = '1.0.1';
+  App.DB_NAME = 'MiInventarioDB';
+  App.DB_VERSION = 2;
+  App.DEFAULT_SETTINGS = {
+    appName: 'Mi Inventario',
+    lowStockLimit: 5,
+    clientFolderId: null,
+    autoClientMode: false,
+    adminPasswordHash: null
+  };
+
+  App.state = {
+    initialized: false,
+    currentMode: 'loading',
+    currentFolderId: null,
+    settings: null,
+    objectUrls: new Set()
+  };
+
+  App.utils = {
+    uid(prefix) {
+      if (window.crypto && typeof crypto.randomUUID === 'function') {
+        return `${prefix || 'id'}-${crypto.randomUUID()}`;
+      }
+      return `${prefix || 'id'}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    },
+
+    now() {
+      return new Date().toISOString();
+    },
+
+    normalize(value) {
+      return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+    },
+
+    escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>'"]/g, (char) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;'
+      }[char]));
+    },
+
+    formatDate(iso) {
+      if (!iso) return '—';
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return '—';
+      return new Intl.DateTimeFormat('es-EC', {
+        year: 'numeric', month: 'short', day: '2-digit'
+      }).format(date);
+    },
+
+    clampInt(value, min, max) {
+      const number = Number.parseInt(value, 10);
+      if (!Number.isFinite(number)) return min;
+      return Math.min(max, Math.max(min, number));
+    },
+
+    async sha256(text) {
+      if (!window.crypto || !window.crypto.subtle) {
+        throw new Error('Web Crypto API no está disponible en este navegador.');
+      }
+      const data = new TextEncoder().encode(String(text));
+      const digest = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(digest))
+        .map((byte) => byte.toString(16).padStart(2, '0'))
+        .join('');
+    },
+
+    blobToDataURL(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error || new Error('No se pudo leer la imagen.'));
+        reader.readAsDataURL(blob);
+      });
+    },
+
+    dataURLToBlob(dataURL) {
+      const parts = String(dataURL).split(',');
+      if (parts.length !== 2) throw new Error('DataURL inválido.');
+      const mimeMatch = parts[0].match(/data:(.*?);base64/);
+      const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+      const binary = atob(parts[1]);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+      return new Blob([bytes], { type: mime });
+    },
+
+    trackObjectUrl(url) {
+      if (url) App.state.objectUrls.add(url);
+      return url;
+    },
+
+    revokeObjectUrls() {
+      App.state.objectUrls.forEach((url) => {
+        try { URL.revokeObjectURL(url); } catch (error) { console.warn(error); }
+      });
+      App.state.objectUrls.clear();
+    }
+  };
+})();
+
+
+================================================================================
+js/database.js
+================================================================================
+// ========================================
+// BASE DE DATOS - INDEXEDDB
+// ========================================
+(function () {
+  'use strict';
+
+  const App = window.InventoryApp;
+  let db = null;
+
+  function requestToPromise(request) {
+    return new Promise((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error('Error de IndexedDB.'));
+    });
+  }
+
+  function transactionDone(transaction) {
+    return new Promise((resolve, reject) => {
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error || new Error('La transacción falló.'));
+      transaction.onabort = () => reject(transaction.error || new Error('La transacción fue cancelada.'));
+    });
+  }
+
+  async function open() {
+    if (db) return db;
+
+    db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open(App.DB_NAME, App.DB_VERSION);
+
+      request.onupgradeneeded = (event) => {
+        const database = event.target.result;
+        const upgradeTx = event.target.transaction;
+
+        // IMPORTANTE: esta migración no borra datos anteriores.
+        // La versión 2 repara instalaciones donde ya existía una base
+        // "MiInventarioDB" con una estructura antigua o incompleta.
+
+        let foldersStore;
+        if (!database.objectStoreNames.contains('folders')) {
+          foldersStore = database.createObjectStore('folders', { keyPath: 'id' });
+        } else {
+          foldersStore = upgradeTx.objectStore('folders');
+        }
+        if (!foldersStore.indexNames.contains('name')) {
+          foldersStore.createIndex('name', 'name', { unique: false });
+        }
+        if (!foldersStore.indexNames.contains('createdAt')) {
+          foldersStore.createIndex('createdAt', 'createdAt', { unique: false });
+        }
+
+        let productsStore;
+        if (!database.objectStoreNames.contains('products')) {
+          productsStore = database.createObjectStore('products', { keyPath: 'id' });
+        } else {
+          productsStore = upgradeTx.objectStore('products');
+        }
+        if (!productsStore.indexNames.contains('folderId')) {
+          productsStore.createIndex('folderId', 'folderId', { unique: false });
+        }
+        if (!productsStore.indexNames.contains('folderCodeKey')) {
+          productsStore.createIndex('folderCodeKey', ['folderId', 'codeKey'], { unique: true });
+        }
+        if (!productsStore.indexNames.contains('updatedAt')) {
+          productsStore.createIndex('updatedAt', 'updatedAt', { unique: false });
+        }
+
+        if (!database.objectStoreNames.contains('images')) {
+          database.createObjectStore('images', { keyPath: 'id' });
+        }
+
+        if (!database.objectStoreNames.contains('config')) {
+          database.createObjectStore('config', { keyPath: 'key' });
+        }
+      };
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error('No se pudo abrir IndexedDB.'));
+      request.onblocked = () => reject(new Error('Hay otra pestaña de Mi Inventario abierta con una versión anterior. Ciérrala y vuelve a abrir esta página.'));
+    });
+
+    db.onversionchange = () => {
+      db.close();
+      db = null;
+    };
+
+    return db;
+  }
+
+  function getDb() {
+    if (!db) throw new Error('La base de datos aún no está inicializada.');
+    return db;
+  }
+
+  async function get(storeName, key) {
+    const database = getDb();
+    const tx = database.transaction(storeName, 'readonly');
+    const result = await requestToPromise(tx.objectStore(storeName).get(key));
+    await transactionDone(tx);
+    return result;
+  }
+
+  async function getAll(storeName) {
+    const database = getDb();
+    const tx = database.transaction(storeName, 'readonly');
+    const result = await requestToPromise(tx.objectStore(storeName).getAll());
+    await transactionDone(tx);
+    return result;
+  }
+
+  async function put(storeName, value) {
+    const database = getDb();
+    const tx = database.transaction(storeName, 'readwrite');
+    await requestToPromise(tx.objectStore(storeName).put(value));
+    await transactionDone(tx);
+    return value;
+  }
+
+  async function add(storeName, value) {
+    const database = getDb();
+    const tx = database.transaction(storeName, 'readwrite');
+    await requestToPromise(tx.objectStore(storeName).add(value));
+    await transactionDone(tx);
+    return value;
+  }
+
+  async function remove(storeName, key) {
+    const database = getDb();
+    const tx = database.transaction(storeName, 'readwrite');
+    await requestToPromise(tx.objectStore(storeName).delete(key));
+    await transactionDone(tx);
+  }
+
+  async function clear(storeName) {
+    const database = getDb();
+    const tx = database.transaction(storeName, 'readwrite');
+    await requestToPromise(tx.objectStore(storeName).clear());
+    await transactionDone(tx);
+  }
+
+  async function getAllByIndex(storeName, indexName, query) {
+    const database = getDb();
+    const tx = database.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    const index = store.index(indexName);
+    const result = await requestToPromise(index.getAll(query));
+    await transactionDone(tx);
+    return result;
+  }
+
+  async function getConfig(key) {
+    const row = await get('config', key);
+    return row ? row.value : undefined;
+  }
+
+  async function setConfig(key, value) {
+    await put('config', { key, value });
+    return value;
+  }
+
+  async function initializeDefaults() {
+    let settings = await getConfig('settings');
+    if (!settings) {
+      settings = { ...App.DEFAULT_SETTINGS };
+    } else {
+      settings = { ...App.DEFAULT_SETTINGS, ...settings };
+    }
+
+    if (!settings.adminPasswordHash) {
+      settings.adminPasswordHash = await App.utils.sha256('1234');
+    }
+
+    settings.lowStockLimit = App.utils.clampInt(settings.lowStockLimit, 0, 999999);
+    settings.autoClientMode = Boolean(settings.autoClientMode);
+    await setConfig('settings', settings);
+    App.state.settings = settings;
+    return settings;
+  }
+
+  async function replaceAllData(payload) {
+    const database = getDb();
+    const tx = database.transaction(['folders', 'products', 'images', 'config'], 'readwrite');
+    const folders = tx.objectStore('folders');
+    const products = tx.objectStore('products');
+    const images = tx.objectStore('images');
+    const config = tx.objectStore('config');
+
+    // Todas las operaciones se encolan sin pausas para mantener activa
+    // la misma transacción y hacer la restauración de forma atómica.
+    folders.clear();
+    products.clear();
+    images.clear();
+    config.clear();
+
+    (payload.folders || []).forEach((item) => folders.put(item));
+    (payload.products || []).forEach((item) => products.put(item));
+    (payload.images || []).forEach((item) => images.put(item));
+    config.put({ key: 'settings', value: payload.settings });
+
+    await transactionDone(tx);
+  }
+
+  App.db = {
+    open,
+    get,
+    getAll,
+    put,
+    add,
+    remove,
+    clear,
+    getAllByIndex,
+    getConfig,
+    setConfig,
+    initializeDefaults,
+    replaceAllData
+  };
+})();
+
+
+================================================================================
+js/ui.js
+================================================================================
+// ========================================
+// INTERFAZ, MODALES Y TOASTS
+// ========================================
+(function () {
+  'use strict';
+
+  const App = window.InventoryApp;
+
+  function el(id) {
+    return document.getElementById(id);
+  }
+
+  function showScreen(screenId) {
+    ['loadingScreen', 'startScreen', 'adminScreen', 'folderInventoryScreen', 'clientScreen']
+      .forEach((id) => {
+        const node = el(id);
+        if (!node) return;
+        const show = id === screenId;
+        node.hidden = !show;
+        node.classList.toggle('is-active', show);
+      });
+  }
+
+  function toast(message, type) {
+    const root = el('toastRoot');
+    if (!root) return;
+    const item = document.createElement('div');
+    item.className = `toast toast--${type || 'info'}`;
+    item.textContent = message;
+    root.appendChild(item);
+    window.setTimeout(() => item.remove(), 3200);
+  }
+
+  function closeModal() {
+    const root = el('modalRoot');
+    if (root) root.innerHTML = '';
+  }
+
+  function openModal(options) {
+    const root = el('modalRoot');
+    if (!root) throw new Error('No existe modalRoot.');
+    closeModal();
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal__header">
+          <div>
+            ${options.eyebrow ? `<p class="eyebrow">${App.utils.escapeHtml(options.eyebrow)}</p>` : ''}
+            <h2 id="modalTitle">${App.utils.escapeHtml(options.title || '')}</h2>
+          </div>
+          ${options.hideClose ? '' : '<button class="modal__close" type="button" data-modal-close aria-label="Cerrar">✕</button>'}
+        </div>
+        <div class="modal__body">${options.bodyHtml || ''}</div>
+        ${options.footerHtml ? `<div class="modal__footer">${options.footerHtml}</div>` : ''}
+      </section>
+    `;
+
+    root.appendChild(backdrop);
+
+    if (!options.hideClose) {
+      backdrop.querySelector('[data-modal-close]')?.addEventListener('click', closeModal);
+      backdrop.addEventListener('click', (event) => {
+        if (event.target === backdrop && options.closeOnBackdrop !== false) closeModal();
+      });
+    }
+
+    if (typeof options.onReady === 'function') {
+      options.onReady(backdrop.querySelector('.modal'));
+    }
+
+    return backdrop.querySelector('.modal');
+  }
+
+  function confirmDialog(options) {
+    return new Promise((resolve) => {
+      openModal({
+        title: options.title || 'Confirmar',
+        bodyHtml: `<p>${App.utils.escapeHtml(options.message || '')}</p>${options.warning ? `<div class="warning-box">${App.utils.escapeHtml(options.warning)}</div>` : ''}`,
+        footerHtml: `
+          <button class="btn btn--secondary" type="button" data-confirm-cancel>Cancelar</button>
+          <button class="btn btn--danger" type="button" data-confirm-ok>${App.utils.escapeHtml(options.confirmText || 'Eliminar')}</button>
+        `,
+        closeOnBackdrop: false,
+        onReady(modal) {
+          const finish = (value) => { closeModal(); resolve(value); };
+          modal.querySelector('[data-confirm-cancel]').addEventListener('click', () => finish(false));
+          modal.querySelector('[data-confirm-ok]').addEventListener('click', () => finish(true));
+          modal.querySelector('[data-modal-close]')?.addEventListener('click', () => finish(false), { once: true });
+        }
+      });
+    });
+  }
+
+  function emptyState(icon, title, text, buttonHtml) {
+    return `
+      <div class="empty-state">
+        <div class="empty-state__icon">${icon}</div>
+        <h3>${App.utils.escapeHtml(title)}</h3>
+        <p>${App.utils.escapeHtml(text)}</p>
+        ${buttonHtml ? `<div style="margin-top:14px">${buttonHtml}</div>` : ''}
+      </div>
+    `;
+  }
+
+  function setButtonBusy(button, busy, busyText) {
+    if (!button) return;
+    if (busy) {
+      button.dataset.originalText = button.textContent;
+      button.disabled = true;
+      button.textContent = busyText || 'Guardando…';
+    } else {
+      button.disabled = false;
+      if (button.dataset.originalText) button.textContent = button.dataset.originalText;
+      delete button.dataset.originalText;
+    }
+  }
+
+  function stockStatus(stock, lowStockLimit) {
+    const value = Number(stock) || 0;
+    if (value <= 0) return { key: 'out', label: '🔴 SIN STOCK' };
+    if (value <= lowStockLimit) return { key: 'low', label: '🟠 STOCK BAJO' };
+    return { key: 'ok', label: '🟢 DISPONIBLE' };
+  }
+
+  function togglePassword(input, button) {
+    const visible = input.type === 'text';
+    input.type = visible ? 'password' : 'text';
+    button.textContent = visible ? '👁️' : '🙈';
+    button.setAttribute('aria-label', visible ? 'Mostrar contraseña' : 'Ocultar contraseña');
+  }
+
+  App.ui = {
+    el,
+    showScreen,
+    toast,
+    openModal,
+    closeModal,
+    confirmDialog,
+    emptyState,
+    setButtonBusy,
+    stockStatus,
+    togglePassword
+  };
+})();
+
+
+================================================================================
+js/folders.js
+================================================================================
+// ========================================
+// CARPETAS
+// ========================================
+(function () {
+  'use strict';
+
+  const App = window.InventoryApp;
+
+  async function list() {
+    const folders = await App.db.getAll('folders');
+    return folders.sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
+  }
+
+  async function get(id) {
+    return App.db.get('folders', id);
+  }
+
+  async function create(name) {
+    const cleanName = String(name || '').trim();
+    if (!cleanName) throw new Error('El nombre de la carpeta no puede estar vacío.');
+
+    const timestamp = App.utils.now();
+    const folder = {
+      id: App.utils.uid('folder'),
+      name: cleanName,
+      createdAt: timestamp,
+      updatedAt: timestamp
+    };
+    await App.db.add('folders', folder);
+    return folder;
+  }
+
+  async function rename(id, name) {
+    const cleanName = String(name || '').trim();
+    if (!cleanName) throw new Error('El nombre de la carpeta no puede estar vacío.');
+    const folder = await get(id);
+    if (!folder) throw new Error('La carpeta ya no existe.');
+    folder.name = cleanName;
+    folder.updatedAt = App.utils.now();
+    await App.db.put('folders', folder);
+    return folder;
+  }
+
+  async function summary(folder) {
+    const products = await App.db.getAllByIndex('products', 'folderId', folder.id);
+    return {
+      ...folder,
+      productCount: products.length,
+      totalUnits: products.reduce((sum, product) => sum + (Number(product.stock) || 0), 0)
+    };
+  }
+
+  async function listWithSummaries() {
+    const folders = await list();
+    return Promise.all(folders.map(summary));
+  }
+
+  async function remove(id) {
+    const folder = await get(id);
+    if (!folder) return;
+    const products = await App.db.getAllByIndex('products', 'folderId', id);
+
+    for (const product of products) {
+      if (product.imageId) {
+        await App.db.remove('images', product.imageId);
+      }
+      await App.db.remove('products', product.id);
+    }
+
+    await App.db.remove('folders', id);
+
+    if (App.state.settings.clientFolderId === id) {
+      App.state.settings.clientFolderId = null;
+      await App.db.setConfig('settings', App.state.settings);
+    }
+  }
+
+  function openCreateModal() {
+    App.ui.openModal({
+      eyebrow: 'Carpetas',
+      title: 'Crear carpeta',
+      bodyHtml: `
+        <form id="folderCreateForm" class="form-grid">
+          <div class="form-row">
+            <label for="folderNameInput">Nombre</label>
+            <input id="folderNameInput" name="name" type="text" maxlength="80" autocomplete="off" placeholder="Ej. Pokémon" required>
+          </div>
+        </form>
+      `,
+      footerHtml: `
+        <button class="btn btn--secondary" type="button" data-modal-cancel>Cancelar</button>
+        <button class="btn btn--primary" type="submit" form="folderCreateForm" data-save-folder>Crear carpeta</button>
+      `,
+      onReady(modal) {
+        const form = modal.querySelector('#folderCreateForm');
+        const input = modal.querySelector('#folderNameInput');
+        const saveButton = modal.querySelector('[data-save-folder]');
+        modal.querySelector('[data-modal-cancel]').addEventListener('click', App.ui.closeModal);
+        input.focus();
+
+        form.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          try {
+            App.ui.setButtonBusy(saveButton, true, 'Creando…');
+            await create(input.value);
+            App.ui.closeModal();
+            App.ui.toast('✅ Carpeta creada', 'success');
+            await App.app.refreshAdmin();
+          } catch (error) {
+            console.error('Error al crear carpeta:', error);
+            App.ui.toast(`❌ ${error.message || 'No se pudo crear la carpeta'}`, 'error');
+            App.ui.setButtonBusy(saveButton, false);
+          }
+        });
+      }
+    });
+  }
+
+  async function openRenameModal(id) {
+    const folder = await get(id);
+    if (!folder) {
+      App.ui.toast('❌ La carpeta ya no existe', 'error');
+      return;
+    }
+
+    App.ui.openModal({
+      eyebrow: 'Carpetas',
+      title: 'Renombrar carpeta',
+      bodyHtml: `
+        <form id="folderRenameForm" class="form-grid">
+          <div class="form-row">
+            <label for="folderRenameInput">Nombre</label>
+            <input id="folderRenameInput" type="text" maxlength="80" value="${App.utils.escapeHtml(folder.name)}" required>
+          </div>
+        </form>
+      `,
+      footerHtml: `
+        <button class="btn btn--secondary" type="button" data-modal-cancel>Cancelar</button>
+        <button class="btn btn--primary" type="submit" form="folderRenameForm" data-save-folder>Guardar</button>
+      `,
+      onReady(modal) {
+        const form = modal.querySelector('#folderRenameForm');
+        const input = modal.querySelector('#folderRenameInput');
+        const button = modal.querySelector('[data-save-folder]');
+        modal.querySelector('[data-modal-cancel]').addEventListener('click', App.ui.closeModal);
+        input.focus();
+        input.select();
+
+        form.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          try {
+            App.ui.setButtonBusy(button, true, 'Guardando…');
+            await rename(id, input.value);
+            App.ui.closeModal();
+            App.ui.toast('✅ Carpeta renombrada', 'success');
+            await App.app.refreshAdmin();
+          } catch (error) {
+            console.error('Error al renombrar carpeta:', error);
+            App.ui.toast(`❌ ${error.message || 'No se pudo renombrar'}`, 'error');
+            App.ui.setButtonBusy(button, false);
+          }
+        });
+      }
+    });
+  }
+
+  async function confirmRemove(id) {
+    const folder = await get(id);
+    if (!folder) return;
+    const products = await App.db.getAllByIndex('products', 'folderId', id);
+    const warning = products.length
+      ? `Esta carpeta contiene ${products.length} producto${products.length === 1 ? '' : 's'}. Al eliminarla también se eliminarán todos sus productos e imágenes.`
+      : 'La carpeta está vacía.';
+
+    const confirmed = await App.ui.confirmDialog({
+      title: 'Eliminar carpeta',
+      message: `¿Seguro que deseas eliminar “${folder.name}”?`,
+      warning,
+      confirmText: 'Eliminar'
+    });
+
+    if (!confirmed) return;
+
+    try {
+      await remove(id);
+      App.ui.toast('✅ Carpeta eliminada', 'success');
+      await App.app.refreshAdmin();
+    } catch (error) {
+      console.error('Error al eliminar carpeta:', error);
+      App.ui.toast('❌ No se pudo eliminar la carpeta', 'error');
+    }
+  }
+
+  App.folders = {
+    list,
+    get,
+    create,
+    rename,
+    remove,
+    summary,
+    listWithSummaries,
+    openCreateModal,
+    openRenameModal,
+    confirmRemove
+  };
+})();
+
+
+================================================================================
+js/products.js
+================================================================================
+// ========================================
+// PRODUCTOS, IMÁGENES Y STOCK
+// ========================================
+(function () {
+  'use strict';
+
+  const App = window.InventoryApp;
+  const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+
+  async function listByFolder(folderId) {
+    return App.db.getAllByIndex('products', 'folderId', folderId);
+  }
+
+  async function get(id) {
+    return App.db.get('products', id);
+  }
+
+  async function codeExists(folderId, code, excludeId) {
+    const key = App.utils.normalize(code);
+    const products = await listByFolder(folderId);
+    return products.some((product) => product.id !== excludeId && product.codeKey === key);
+  }
+
+  function validateImage(file) {
+    if (!file) return;
+    if (!file.type || !file.type.startsWith('image/')) throw new Error('Selecciona un archivo de imagen válido.');
+    if (file.size > MAX_IMAGE_BYTES) throw new Error('La imagen es demasiado grande. Máximo 8 MB.');
+  }
+
+  async function saveImage(file) {
+    if (!file) return null;
+    validateImage(file);
+    const newImageId = App.utils.uid('image');
+    await App.db.put('images', {
+      id: newImageId,
+      blob: file,
+      type: file.type,
+      name: file.name || 'imagen',
+      createdAt: App.utils.now()
+    });
+    return newImageId;
+  }
+
+  async function create(folderId, data) {
+    const name = String(data.name || '').trim();
+    const code = String(data.code || '').trim();
+    const stock = App.utils.clampInt(data.stock, 0, 999999999);
+    if (!name) throw new Error('El producto necesita un nombre.');
+    if (!code) throw new Error('El código no puede estar vacío.');
+    if (await codeExists(folderId, code, null)) throw new Error('Ya existe un producto con ese código en esta carpeta.');
+
+    const imageId = await saveImage(data.imageFile);
+    const timestamp = App.utils.now();
+    const product = {
+      id: App.utils.uid('product'),
+      folderId,
+      name,
+      code,
+      codeKey: App.utils.normalize(code),
+      stock,
+      imageId,
+      createdAt: timestamp,
+      updatedAt: timestamp
+    };
+
+    try {
+      await App.db.add('products', product);
+      return product;
+    } catch (error) {
+      if (imageId) await App.db.remove('images', imageId).catch(() => {});
+      throw error;
+    }
+  }
+
+  async function update(id, data) {
+    const product = await get(id);
+    if (!product) throw new Error('El producto ya no existe.');
+    const name = String(data.name || '').trim();
+    const code = String(data.code || '').trim();
+    const stock = App.utils.clampInt(data.stock, 0, 999999999);
+    if (!name) throw new Error('El producto necesita un nombre.');
+    if (!code) throw new Error('El código no puede estar vacío.');
+    if (await codeExists(product.folderId, code, id)) throw new Error('Ya existe un producto con ese código en esta carpeta.');
+
+    const previousImageId = product.imageId || null;
+    let imageId = previousImageId;
+    let newImageId = null;
+    if (data.imageFile) {
+      newImageId = await saveImage(data.imageFile);
+      imageId = newImageId;
+    }
+
+    const updated = {
+      ...product,
+      name,
+      code,
+      codeKey: App.utils.normalize(code),
+      stock,
+      imageId,
+      updatedAt: App.utils.now()
+    };
+
+    try {
+      await App.db.put('products', updated);
+      if (newImageId && previousImageId && previousImageId !== newImageId) {
+        await App.db.remove('images', previousImageId);
+      }
+      return updated;
+    } catch (error) {
+      if (newImageId) await App.db.remove('images', newImageId).catch(() => {});
+      console.error('Error al guardar producto actualizado:', error);
+      throw error;
+    }
+  }
+
+  async function remove(id) {
+    const product = await get(id);
+    if (!product) return;
+    if (product.imageId) await App.db.remove('images', product.imageId);
+    await App.db.remove('products', id);
+  }
+
+  async function changeStock(id, delta) {
+    const product = await get(id);
+    if (!product) throw new Error('El producto ya no existe.');
+    const nextStock = Math.max(0, (Number(product.stock) || 0) + delta);
+    product.stock = nextStock;
+    product.updatedAt = App.utils.now();
+    await App.db.put('products', product);
+    return product;
+  }
+
+  async function loadImageUrl(imageId) {
+    if (!imageId) return null;
+    const image = await App.db.get('images', imageId);
+    if (!image || !(image.blob instanceof Blob)) return null;
+    return App.utils.trackObjectUrl(URL.createObjectURL(image.blob));
+  }
+
+  function sortProducts(products, sortValue) {
+    const result = [...products];
+    switch (sortValue) {
+      case 'name-desc': return result.sort((a, b) => b.name.localeCompare(a.name, 'es', { sensitivity: 'base' }));
+      case 'stock-desc': return result.sort((a, b) => b.stock - a.stock || a.name.localeCompare(b.name, 'es'));
+      case 'stock-asc': return result.sort((a, b) => a.stock - b.stock || a.name.localeCompare(b.name, 'es'));
+      case 'updated-desc': return result.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+      default: return result.sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
+    }
+  }
+
+  async function renderProducts(target, products, options) {
+    App.utils.revokeObjectUrls();
+    target.innerHTML = '';
+    if (!products.length) {
+      target.innerHTML = App.ui.emptyState('📦', 'No hay productos', options.isClient ? 'No hay productos para mostrar.' : 'Añade el primer producto a esta carpeta.');
+      return;
+    }
+
+    for (const product of products) {
+      const status = App.ui.stockStatus(product.stock, App.state.settings.lowStockLimit);
+      const card = document.createElement('article');
+      card.className = `product-card ${status.key === 'out' ? 'product-card--out' : ''}`;
+      card.dataset.productId = product.id;
+      card.innerHTML = `
+        <div class="product-image-wrap" data-image-slot>
+          <div class="product-placeholder">🖼️</div>
+        </div>
+        <div class="product-card__body">
+          <h3>${App.utils.escapeHtml(product.name)}</h3>
+          <div class="product-code">${App.utils.escapeHtml(product.code)}</div>
+          <div class="product-info-row">
+            <div><span class="muted">Stock</span><br><span class="stock-value">${product.stock}</span></div>
+            <span class="stock-badge stock-badge--${status.key}">${status.label}</span>
+          </div>
+          ${options.isClient ? '' : `
+            <div class="stock-stepper">
+              <button type="button" data-action="stock-minus" data-product-id="${product.id}" aria-label="Restar stock">−</button>
+              <strong>${product.stock}</strong>
+              <button type="button" data-action="stock-plus" data-product-id="${product.id}" aria-label="Sumar stock">+</button>
+            </div>
+            <div class="product-actions">
+              <button class="btn btn--secondary" type="button" data-action="edit-product" data-product-id="${product.id}">✏️ Editar</button>
+              <button class="btn btn--danger" type="button" data-action="delete-product" data-product-id="${product.id}">🗑️ Eliminar</button>
+            </div>
+          `}
+        </div>
+      `;
+      target.appendChild(card);
+
+      if (product.imageId) {
+        loadImageUrl(product.imageId).then((url) => {
+          if (!url || !card.isConnected) return;
+          const slot = card.querySelector('[data-image-slot]');
+          slot.innerHTML = `<img class="product-image" src="${url}" alt="${App.utils.escapeHtml(product.name)}">`;
+        }).catch((error) => console.error('Error al mostrar imagen:', error));
+      }
+    }
+  }
+
+  function productFormHtml(product) {
+    const editing = Boolean(product);
+    return `
+      <form id="productForm" class="form-grid">
+        <div class="image-picker">
+          <div class="form-row">
+            <label for="productImageInput">🖼️ Imagen ${editing ? '(opcional para reemplazar)' : '(opcional)'}</label>
+            <input id="productImageInput" type="file" accept="image/*">
+            <p class="form-hint">Máximo recomendado: 8 MB.</p>
+          </div>
+          <div id="productImagePreview" class="image-preview">${editing && product.imageId ? 'Imagen actual conservada si no eliges otra.' : 'Vista previa'}</div>
+        </div>
+        <div class="form-row">
+          <label for="productNameInput">Nombre</label>
+          <input id="productNameInput" type="text" maxlength="120" value="${editing ? App.utils.escapeHtml(product.name) : ''}" required>
+        </div>
+        <div class="form-row">
+          <label for="productCodeInput">Código / identificador</label>
+          <input id="productCodeInput" type="text" maxlength="80" value="${editing ? App.utils.escapeHtml(product.code) : ''}" required>
+        </div>
+        <div class="form-row">
+          <label for="productStockInput">Stock</label>
+          <input id="productStockInput" type="number" min="0" step="1" value="${editing ? product.stock : 0}" required>
+        </div>
+      </form>
+    `;
+  }
+
+  async function openProductModal(folderId, productId) {
+    const product = productId ? await get(productId) : null;
+    if (productId && !product) {
+      App.ui.toast('❌ El producto ya no existe', 'error');
+      return;
+    }
+
+    App.ui.openModal({
+      eyebrow: 'Productos',
+      title: product ? 'Editar producto' : 'Añadir producto',
+      bodyHtml: productFormHtml(product),
+      footerHtml: `
+        <button class="btn btn--secondary" type="button" data-modal-cancel>Cancelar</button>
+        <button class="btn btn--primary" type="submit" form="productForm" data-save-product>${product ? 'Guardar cambios' : 'Añadir producto'}</button>
+      `,
+      onReady(modal) {
+        const form = modal.querySelector('#productForm');
+        const imageInput = modal.querySelector('#productImageInput');
+        const preview = modal.querySelector('#productImagePreview');
+        const saveButton = modal.querySelector('[data-save-product]');
+        modal.querySelector('[data-modal-cancel]').addEventListener('click', App.ui.closeModal);
+
+        imageInput.addEventListener('change', () => {
+          const file = imageInput.files?.[0];
+          if (!file) return;
+          try {
+            validateImage(file);
+            const reader = new FileReader();
+            reader.onload = () => { preview.innerHTML = `<img src="${reader.result}" alt="Vista previa">`; };
+            reader.onerror = () => App.ui.toast('❌ No se pudo previsualizar la imagen', 'error');
+            reader.readAsDataURL(file);
+          } catch (error) {
+            imageInput.value = '';
+            App.ui.toast(`⚠️ ${error.message}`, 'warning');
+          }
+        });
+
+        form.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          const imageFile = imageInput.files?.[0] || null;
+          const data = {
+            name: modal.querySelector('#productNameInput').value,
+            code: modal.querySelector('#productCodeInput').value,
+            stock: modal.querySelector('#productStockInput').value,
+            imageFile
+          };
+
+          try {
+            App.ui.setButtonBusy(saveButton, true, 'Guardando…');
+            if (product) {
+              await update(product.id, data);
+              App.ui.toast('✅ Producto actualizado', 'success');
+            } else {
+              await create(folderId, data);
+              App.ui.toast('✅ Producto añadido', 'success');
+            }
+            App.ui.closeModal();
+            await App.app.refreshCurrentFolder();
+          } catch (error) {
+            console.error('Error al guardar producto:', error);
+            const isDuplicate = /Ya existe un producto/.test(error.message || '');
+            App.ui.toast(`${isDuplicate ? '⚠️' : '❌'} ${error.message || 'No se pudo guardar'}`, isDuplicate ? 'warning' : 'error');
+            App.ui.setButtonBusy(saveButton, false);
+          }
+        });
+      }
+    });
+  }
+
+  async function confirmRemove(id) {
+    const product = await get(id);
+    if (!product) return;
+    const confirmed = await App.ui.confirmDialog({
+      title: 'Eliminar producto',
+      message: `¿Eliminar “${product.name}”?`,
+      warning: 'También se eliminará su imagen guardada.',
+      confirmText: 'Eliminar'
+    });
+    if (!confirmed) return;
+
+    try {
+      await remove(id);
+      App.ui.toast('✅ Producto eliminado', 'success');
+      await App.app.refreshCurrentFolder();
+    } catch (error) {
+      console.error('Error al eliminar producto:', error);
+      App.ui.toast('❌ No se pudo eliminar el producto', 'error');
+    }
+  }
+
+  App.products = {
+    listByFolder,
+    get,
+    create,
+    update,
+    remove,
+    changeStock,
+    loadImageUrl,
+    sortProducts,
+    renderProducts,
+    openProductModal,
+    confirmRemove
+  };
+})();
+
+
+================================================================================
+js/settings.js
+================================================================================
+// ========================================
+// CONFIGURACIÓN Y CONTRASEÑA
+// ========================================
+(function () {
+  'use strict';
+
+  const App = window.InventoryApp;
+
+  async function saveSettings(nextSettings) {
+    const normalized = {
+      ...App.state.settings,
+      ...nextSettings,
+      appName: String(nextSettings.appName ?? App.state.settings.appName).trim() || 'Mi Inventario',
+      lowStockLimit: App.utils.clampInt(nextSettings.lowStockLimit ?? App.state.settings.lowStockLimit, 0, 999999),
+      clientFolderId: nextSettings.clientFolderId || null,
+      autoClientMode: Boolean(nextSettings.autoClientMode)
+    };
+    await App.db.setConfig('settings', normalized);
+    App.state.settings = normalized;
+    return normalized;
+  }
+
+  async function verifyPassword(password) {
+    const hash = await App.utils.sha256(password);
+    return hash === App.state.settings.adminPasswordHash;
+  }
+
+  async function changePassword(currentPassword, newPassword, confirmPassword) {
+    if (!(await verifyPassword(currentPassword))) throw new Error('La contraseña actual es incorrecta.');
+    if (String(newPassword).length < 4) throw new Error('La nueva contraseña debe tener al menos 4 caracteres.');
+    if (newPassword !== confirmPassword) throw new Error('La confirmación no coincide con la nueva contraseña.');
+    const adminPasswordHash = await App.utils.sha256(newPassword);
+    await saveSettings({ adminPasswordHash });
+  }
+
+  async function openSettingsModal() {
+    const folders = await App.folders.list();
+    const settings = App.state.settings;
+    const folderOptions = [
+      '<option value="">— Sin carpeta asignada —</option>',
+      ...folders.map((folder) => `<option value="${folder.id}" ${settings.clientFolderId === folder.id ? 'selected' : ''}>${App.utils.escapeHtml(folder.name)}</option>`)
+    ].join('');
+
+    App.ui.openModal({
+      eyebrow: 'Administrador',
+      title: 'Configuración',
+      bodyHtml: `
+        <form id="settingsForm" class="form-grid">
+          <h3 class="settings-title">General</h3>
+          <div class="form-row">
+            <label for="settingsAppName">Nombre de la aplicación</label>
+            <input id="settingsAppName" type="text" maxlength="80" value="${App.utils.escapeHtml(settings.appName)}" required>
+          </div>
+
+          <div class="divider"></div>
+          <h3 class="settings-title">Stock</h3>
+          <div class="form-row">
+            <label for="settingsLowStock">Límite de stock bajo</label>
+            <input id="settingsLowStock" type="number" min="0" step="1" value="${settings.lowStockLimit}" required>
+            <p class="form-hint">De 1 hasta este número se mostrará STOCK BAJO; 0 siempre será SIN STOCK.</p>
+          </div>
+
+          <div class="divider"></div>
+          <h3 class="settings-title">Cliente</h3>
+          <div class="form-row">
+            <label for="settingsClientFolder">Carpeta visible para el cliente</label>
+            <select id="settingsClientFolder">${folderOptions}</select>
+          </div>
+          <label class="checkbox-row" for="settingsAutoClient">
+            <span><strong>Iniciar automáticamente en modo cliente</strong><br><span class="form-hint">Solo funciona si existe una carpeta asignada.</span></span>
+            <input id="settingsAutoClient" type="checkbox" ${settings.autoClientMode ? 'checked' : ''}>
+          </label>
+
+          <div class="divider"></div>
+          <h3 class="settings-title">Copia de seguridad</h3>
+          <div class="stack">
+            <button class="btn btn--secondary btn--block" type="button" data-settings-backup>💾 Crear copia de seguridad</button>
+            <button class="btn btn--secondary btn--block" type="button" data-settings-restore>📥 Restaurar copia de seguridad</button>
+          </div>
+
+          <div class="divider"></div>
+          <h3 class="settings-title">Cambiar contraseña</h3>
+          <div class="form-row">
+            <label for="currentPassword">Contraseña actual</label>
+            <div class="password-field">
+              <input id="currentPassword" type="password" autocomplete="current-password">
+              <button type="button" data-toggle-password="#currentPassword" aria-label="Mostrar contraseña">👁️</button>
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="newPassword">Nueva contraseña</label>
+            <div class="password-field">
+              <input id="newPassword" type="password" minlength="4" autocomplete="new-password">
+              <button type="button" data-toggle-password="#newPassword" aria-label="Mostrar contraseña">👁️</button>
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="confirmPassword">Confirmar nueva contraseña</label>
+            <div class="password-field">
+              <input id="confirmPassword" type="password" minlength="4" autocomplete="new-password">
+              <button type="button" data-toggle-password="#confirmPassword" aria-label="Mostrar contraseña">👁️</button>
+            </div>
+          </div>
+          <button class="btn btn--dark btn--block" type="button" data-change-password>🔑 Cambiar contraseña</button>
+        </form>
+      `,
+      footerHtml: `
+        <button class="btn btn--secondary" type="button" data-modal-cancel>Cerrar</button>
+        <button class="btn btn--primary" type="submit" form="settingsForm" data-save-settings>Guardar configuración</button>
+      `,
+      onReady(modal) {
+        const form = modal.querySelector('#settingsForm');
+        const saveButton = modal.querySelector('[data-save-settings]');
+        modal.querySelector('[data-modal-cancel]').addEventListener('click', App.ui.closeModal);
+
+        modal.querySelectorAll('[data-toggle-password]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const input = modal.querySelector(button.dataset.togglePassword);
+            if (input) App.ui.togglePassword(input, button);
+          });
+        });
+
+        modal.querySelector('[data-settings-backup]').addEventListener('click', async () => {
+          try { await App.backup.download(); }
+          catch (error) {
+            console.error('Error al crear backup:', error);
+            App.ui.toast('❌ No se pudo crear la copia de seguridad', 'error');
+          }
+        });
+
+        modal.querySelector('[data-settings-restore]').addEventListener('click', () => {
+          App.ui.closeModal();
+          App.backup.chooseRestoreFile();
+        });
+
+        modal.querySelector('[data-change-password]').addEventListener('click', async (event) => {
+          const button = event.currentTarget;
+          try {
+            App.ui.setButtonBusy(button, true, 'Cambiando…');
+            await changePassword(
+              modal.querySelector('#currentPassword').value,
+              modal.querySelector('#newPassword').value,
+              modal.querySelector('#confirmPassword').value
+            );
+            modal.querySelector('#currentPassword').value = '';
+            modal.querySelector('#newPassword').value = '';
+            modal.querySelector('#confirmPassword').value = '';
+            App.ui.toast('✅ Contraseña actualizada', 'success');
+          } catch (error) {
+            console.error('Error al cambiar contraseña:', error);
+            App.ui.toast(`❌ ${error.message || 'No se pudo cambiar la contraseña'}`, 'error');
+          } finally {
+            App.ui.setButtonBusy(button, false);
+          }
+        });
+
+        form.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          try {
+            App.ui.setButtonBusy(saveButton, true, 'Guardando…');
+            await saveSettings({
+              appName: modal.querySelector('#settingsAppName').value,
+              lowStockLimit: modal.querySelector('#settingsLowStock').value,
+              clientFolderId: modal.querySelector('#settingsClientFolder').value || null,
+              autoClientMode: modal.querySelector('#settingsAutoClient').checked
+            });
+            App.ui.closeModal();
+            App.ui.toast('✅ Configuración guardada', 'success');
+            App.app.applyBranding();
+            await App.app.refreshAdmin();
+          } catch (error) {
+            console.error('Error al guardar configuración:', error);
+            App.ui.toast('❌ No se pudo guardar la configuración', 'error');
+            App.ui.setButtonBusy(saveButton, false);
+          }
+        });
+      }
+    });
+  }
+
+  App.settings = {
+    saveSettings,
+    verifyPassword,
+    changePassword,
+    openSettingsModal
+  };
+})();
+
+
+================================================================================
+js/backup.js
+================================================================================
+// ========================================
+// COPIA DE SEGURIDAD Y RESTAURACIÓN
+// ========================================
+(function () {
+  'use strict';
+
+  const App = window.InventoryApp;
+
+  async function buildPayload() {
+    const [folders, products, imageRows] = await Promise.all([
+      App.db.getAll('folders'),
+      App.db.getAll('products'),
+      App.db.getAll('images')
+    ]);
+
+    const images = [];
+    for (const image of imageRows) {
+      images.push({
+        id: image.id,
+        type: image.type || image.blob?.type || 'application/octet-stream',
+        name: image.name || 'imagen',
+        createdAt: image.createdAt || App.utils.now(),
+        dataURL: await App.utils.blobToDataURL(image.blob)
+      });
+    }
+
+    return {
+      format: 'mi-inventario-backup',
+      version: 1,
+      appVersion: App.VERSION,
+      exportedAt: App.utils.now(),
+      settings: { ...App.state.settings },
+      folders,
+      products,
+      images
+    };
+  }
+
+  async function download() {
+    const payload = await buildPayload();
+    const json = JSON.stringify(payload, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const date = new Date().toISOString().slice(0, 10);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `mi-inventario-backup-${date}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+    App.ui.toast('✅ Copia de seguridad creada', 'success');
+  }
+
+  function validatePayload(payload) {
+    if (!payload || payload.format !== 'mi-inventario-backup') throw new Error('El archivo no es una copia válida de Mi Inventario.');
+    if (payload.version !== 1) throw new Error('La versión de la copia no es compatible.');
+    if (!payload.settings || !Array.isArray(payload.folders) || !Array.isArray(payload.products) || !Array.isArray(payload.images)) {
+      throw new Error('La copia está incompleta o dañada.');
+    }
+
+    const folderIds = new Set();
+    payload.folders.forEach((folder) => {
+      if (!folder.id || !String(folder.name || '').trim()) throw new Error('La copia contiene una carpeta inválida.');
+      folderIds.add(folder.id);
+    });
+
+    const productIds = new Set();
+    const perFolderCodes = new Set();
+    payload.products.forEach((product) => {
+      if (!product.id || !folderIds.has(product.folderId) || !String(product.name || '').trim() || !String(product.code || '').trim()) {
+        throw new Error('La copia contiene un producto inválido.');
+      }
+      if (productIds.has(product.id)) throw new Error('La copia contiene IDs de producto duplicados.');
+      productIds.add(product.id);
+      product.stock = Math.max(0, Number.parseInt(product.stock, 10) || 0);
+      product.codeKey = App.utils.normalize(product.code);
+      const pair = `${product.folderId}::${product.codeKey}`;
+      if (perFolderCodes.has(pair)) throw new Error('La copia contiene códigos duplicados dentro de una carpeta.');
+      perFolderCodes.add(pair);
+    });
+
+    const imageIds = new Set();
+    payload.images.forEach((image) => {
+      if (!image.id || typeof image.dataURL !== 'string' || !image.dataURL.startsWith('data:')) throw new Error('La copia contiene una imagen inválida.');
+      imageIds.add(image.id);
+    });
+
+    payload.products.forEach((product) => {
+      if (product.imageId && !imageIds.has(product.imageId)) product.imageId = null;
+    });
+
+    if (payload.settings.clientFolderId && !folderIds.has(payload.settings.clientFolderId)) {
+      payload.settings.clientFolderId = null;
+    }
+
+    payload.settings = {
+      ...App.DEFAULT_SETTINGS,
+      ...payload.settings,
+      appName: String(payload.settings.appName || 'Mi Inventario').trim() || 'Mi Inventario',
+      lowStockLimit: App.utils.clampInt(payload.settings.lowStockLimit, 0, 999999),
+      autoClientMode: Boolean(payload.settings.autoClientMode)
+    };
+
+    if (!payload.settings.adminPasswordHash || !/^[a-f0-9]{64}$/i.test(payload.settings.adminPasswordHash)) {
+      throw new Error('La copia no contiene una contraseña administrativa válida.');
+    }
+
+    return payload;
+  }
+
+  async function parseFile(file) {
+    if (!file) throw new Error('No se seleccionó ningún archivo.');
+    const text = await file.text();
+    let payload;
+    try { payload = JSON.parse(text); }
+    catch (error) { throw new Error('El archivo JSON no se puede leer.'); }
+    return validatePayload(payload);
+  }
+
+  async function restorePayload(payload) {
+    const images = payload.images.map((image) => ({
+      id: image.id,
+      type: image.type || 'application/octet-stream',
+      name: image.name || 'imagen',
+      createdAt: image.createdAt || App.utils.now(),
+      blob: App.utils.dataURLToBlob(image.dataURL)
+    }));
+
+    await App.db.replaceAllData({
+      folders: payload.folders,
+      products: payload.products,
+      images,
+      settings: payload.settings
+    });
+
+    App.state.settings = payload.settings;
+    App.state.currentFolderId = null;
+    App.utils.revokeObjectUrls();
+    App.app.applyBranding();
+  }
+
+  async function handleRestoreFile(file) {
+    try {
+      const payload = await parseFile(file);
+      const confirmed = await App.ui.confirmDialog({
+        title: 'Restaurar copia de seguridad',
+        message: 'Restaurar esta copia reemplazará los datos actuales.',
+        warning: 'Las carpetas, productos, imágenes, stock y configuración actuales serán reemplazados por los de la copia.',
+        confirmText: 'Restaurar'
+      });
+      if (!confirmed) return;
+      await restorePayload(payload);
+      App.ui.toast('✅ Datos restaurados', 'success');
+      App.state.currentMode = 'admin';
+      App.ui.showScreen('adminScreen');
+      await App.app.refreshAdmin();
+    } catch (error) {
+      console.error('Error al restaurar copia:', error);
+      App.ui.toast(`❌ ${error.message || 'No se pudo restaurar la copia'}`, 'error');
+    }
+  }
+
+  function chooseRestoreFile() {
+    const input = App.ui.el('restoreFileInput');
+    if (!input) return;
+    input.value = '';
+    input.click();
+  }
+
+  function bindRestoreInput() {
+    const input = App.ui.el('restoreFileInput');
+    if (!input) return;
+    input.addEventListener('change', async () => {
+      const file = input.files?.[0];
+      input.value = '';
+      if (file) await handleRestoreFile(file);
+    });
+  }
+
+  App.backup = {
+    buildPayload,
+    download,
+    parseFile,
+    restorePayload,
+    chooseRestoreFile,
+    bindRestoreInput
+  };
+})();
+
+
+================================================================================
+js/app.js
+================================================================================
+// ========================================
+// APLICACIÓN PRINCIPAL
+// ========================================
+(function () {
+  'use strict';
+
+  const App = window.InventoryApp;
+  const viewCache = {
+    folders: [],
+    currentProducts: [],
+    clientProducts: []
+  };
+
+  function applyBranding() {
+    const appName = App.state.settings?.appName || 'Mi Inventario';
+    document.title = appName;
+    const startName = App.ui.el('startAppName');
+    const adminName = App.ui.el('adminAppName');
+    if (startName) startName.textContent = appName;
+    if (adminName) adminName.textContent = appName;
+  }
+
+  async function buildDashboard() {
+    const [folders, products] = await Promise.all([
+      App.folders.list(),
+      App.db.getAll('products')
+    ]);
+    const threshold = App.state.settings.lowStockLimit;
+    const totalUnits = products.reduce((sum, product) => sum + (Number(product.stock) || 0), 0);
+    const low = products.filter((product) => product.stock > 0 && product.stock <= threshold).length;
+    const out = products.filter((product) => product.stock <= 0).length;
+    const assigned = App.state.settings.clientFolderId
+      ? folders.find((folder) => folder.id === App.state.settings.clientFolderId)
+      : null;
+
+    const cards = [
+      ['📁', folders.length, 'Total de carpetas'],
+      ['📦', products.length, 'Total de productos'],
+      ['🔢', totalUnits, 'Unidades en stock'],
+      ['🟠', low, 'Productos con stock bajo'],
+      ['🔴', out, 'Productos sin stock']
+    ];
+
+    const target = App.ui.el('dashboardCards');
+    target.innerHTML = cards.map(([icon, value, label]) => `
+      <article class="stat-card">
+        <span class="stat-card__icon">${icon}</span>
+        <strong class="stat-card__value">${value}</strong>
+        <div class="stat-card__label">${label}</div>
+      </article>
+    `).join('') + `
+      <article class="stat-card stat-card--wide">
+        <span class="stat-card__icon">👤</span>
+        <strong class="stat-card__value" style="font-size:1.05rem">${assigned ? App.utils.escapeHtml(assigned.name) : 'Sin asignar'}</strong>
+        <div class="stat-card__label">Carpeta actualmente asignada al cliente</div>
+      </article>
+    `;
+  }
+
+  function renderFoldersFromCache() {
+    const target = App.ui.el('folderGrid');
+    const query = App.utils.normalize(App.ui.el('folderSearchInput')?.value || '');
+    const folders = viewCache.folders.filter((folder) => !query || App.utils.normalize(folder.name).includes(query));
+
+    if (!folders.length) {
+      target.innerHTML = query
+        ? App.ui.emptyState('🔎', 'Sin resultados', 'No encontramos carpetas con esa búsqueda.')
+        : App.ui.emptyState('📁', 'Todavía no hay carpetas', 'Crea una carpeta para comenzar.', '<button class="btn btn--primary" data-action="create-folder">➕ Crear carpeta</button>');
+      return;
+    }
+
+    target.innerHTML = folders.map((folder) => `
+      <article class="folder-card">
+        <div class="folder-card__main" data-action="open-folder" data-folder-id="${folder.id}" role="button" tabindex="0">
+          <div class="folder-card__icon">📁</div>
+          <h3>${App.utils.escapeHtml(folder.name)}</h3>
+          <p>Creada: ${App.utils.formatDate(folder.createdAt)}</p>
+          <div class="folder-meta">
+            <span>📦 ${folder.productCount} producto${folder.productCount === 1 ? '' : 's'}</span>
+            <span>🔢 ${folder.totalUnits} unidad${folder.totalUnits === 1 ? '' : 'es'}</span>
+          </div>
+        </div>
+        <div class="folder-card__actions">
+          <button class="mini-btn" type="button" data-action="rename-folder" data-folder-id="${folder.id}" title="Renombrar">✏️</button>
+          <button class="mini-btn mini-btn--danger" type="button" data-action="delete-folder" data-folder-id="${folder.id}" title="Eliminar">🗑️</button>
+        </div>
+      </article>
+    `).join('');
+  }
+
+  async function refreshAdmin() {
+    try {
+      viewCache.folders = await App.folders.listWithSummaries();
+      renderFoldersFromCache();
+      await buildDashboard();
+    } catch (error) {
+      console.error('Error al actualizar administrador:', error);
+      App.ui.toast('❌ No se pudo actualizar el inventario', 'error');
+    }
+  }
+
+  async function enterAdmin() {
+    App.state.currentMode = 'admin';
+    App.state.currentFolderId = null;
+    App.utils.revokeObjectUrls();
+    App.ui.showScreen('adminScreen');
+    await refreshAdmin();
+  }
+
+  async function showStart() {
+    App.state.currentMode = 'start';
+    App.state.currentFolderId = null;
+    App.utils.revokeObjectUrls();
+    applyBranding();
+    App.ui.showScreen('startScreen');
+  }
+
+  function openAdminLogin() {
+    App.ui.openModal({
+      eyebrow: 'Acceso protegido',
+      title: 'Modo administrador',
+      bodyHtml: `
+        <form id="adminLoginForm" class="form-grid">
+          <div class="form-row">
+            <label for="adminPasswordInput">Contraseña</label>
+            <div class="password-field">
+              <input id="adminPasswordInput" type="password" autocomplete="current-password" required>
+              <button type="button" data-login-toggle aria-label="Mostrar contraseña">👁️</button>
+            </div>
+          </div>
+        </form>
+      `,
+      footerHtml: `
+        <button class="btn btn--secondary" type="button" data-modal-cancel>Cancelar</button>
+        <button class="btn btn--dark" type="submit" form="adminLoginForm" data-admin-login>Entrar</button>
+      `,
+      onReady(modal) {
+        const input = modal.querySelector('#adminPasswordInput');
+        const button = modal.querySelector('[data-admin-login]');
+        modal.querySelector('[data-modal-cancel]').addEventListener('click', App.ui.closeModal);
+        modal.querySelector('[data-login-toggle]').addEventListener('click', (event) => App.ui.togglePassword(input, event.currentTarget));
+        input.focus();
+
+        modal.querySelector('#adminLoginForm').addEventListener('submit', async (event) => {
+          event.preventDefault();
+          try {
+            App.ui.setButtonBusy(button, true, 'Verificando…');
+            const ok = await App.settings.verifyPassword(input.value);
+            if (!ok) {
+              App.ui.toast('❌ Contraseña incorrecta', 'error');
+              input.select();
+              App.ui.setButtonBusy(button, false);
+              return;
+            }
+            App.ui.closeModal();
+            await enterAdmin();
+          } catch (error) {
+            console.error('Error al verificar contraseña:', error);
+            App.ui.toast('❌ No se pudo verificar la contraseña', 'error');
+            App.ui.setButtonBusy(button, false);
+          }
+        });
+      }
+    });
+  }
+
+  async function openFolder(folderId) {
+    const folder = await App.folders.get(folderId);
+    if (!folder) {
+      App.ui.toast('❌ La carpeta ya no existe', 'error');
+      await refreshAdmin();
+      return;
+    }
+    App.state.currentMode = 'folder';
+    App.state.currentFolderId = folderId;
+    App.ui.el('folderInventoryTitle').textContent = folder.name;
+    App.ui.el('productSearchInput').value = '';
+    App.ui.showScreen('folderInventoryScreen');
+    await refreshCurrentFolder();
+  }
+
+  function filterAndSortCurrentProducts() {
+    const query = App.utils.normalize(App.ui.el('productSearchInput')?.value || '');
+    const sort = App.ui.el('productSortSelect')?.value || 'name-asc';
+    const filtered = viewCache.currentProducts.filter((product) => {
+      if (!query) return true;
+      return App.utils.normalize(product.name).includes(query) || App.utils.normalize(product.code).includes(query);
+    });
+    return App.products.sortProducts(filtered, sort);
+  }
+
+  async function renderCurrentProducts() {
+    await App.products.renderProducts(App.ui.el('productGrid'), filterAndSortCurrentProducts(), { isClient: false });
+  }
+
+  async function refreshCurrentFolder() {
+    if (!App.state.currentFolderId) return;
+    const folder = await App.folders.get(App.state.currentFolderId);
+    if (!folder) {
+      App.ui.toast('⚠️ Esa carpeta fue eliminada', 'warning');
+      App.state.currentFolderId = null;
+      App.state.currentMode = 'admin';
+      App.ui.showScreen('adminScreen');
+      await refreshAdmin();
+      return;
+    }
+
+    App.ui.el('folderInventoryTitle').textContent = folder.name;
+    viewCache.currentProducts = await App.products.listByFolder(folder.id);
+    await renderCurrentProducts();
+    await refreshAdmin();
+  }
+
+  async function enterClient() {
+    const folderId = App.state.settings.clientFolderId;
+    if (!folderId) {
+      App.ui.toast('⚠️ Todavía no se ha configurado una carpeta para el cliente.', 'warning');
+      if (App.state.currentMode === 'loading') await showStart();
+      return false;
+    }
+
+    const folder = await App.folders.get(folderId);
+    if (!folder) {
+      App.state.settings.clientFolderId = null;
+      await App.db.setConfig('settings', App.state.settings);
+      App.ui.toast('⚠️ La carpeta del cliente ya no existe. Configúrala nuevamente.', 'warning');
+      await showStart();
+      return false;
+    }
+
+    App.state.currentMode = 'client';
+    App.state.currentFolderId = folderId;
+    App.ui.el('clientFolderTitle').textContent = folder.name;
+    App.ui.el('clientSearchInput').value = '';
+    App.ui.showScreen('clientScreen');
+    await refreshClient();
+    return true;
+  }
+
+  function filterClientProducts() {
+    const query = App.utils.normalize(App.ui.el('clientSearchInput')?.value || '');
+    return App.products.sortProducts(viewCache.clientProducts.filter((product) => {
+      if (!query) return true;
+      return App.utils.normalize(product.name).includes(query) || App.utils.normalize(product.code).includes(query);
+    }), 'name-asc');
+  }
+
+  async function renderClientProducts() {
+    await App.products.renderProducts(App.ui.el('clientProductGrid'), filterClientProducts(), { isClient: true });
+  }
+
+  async function refreshClient() {
+    if (!App.state.settings.clientFolderId) return showStart();
+    const folder = await App.folders.get(App.state.settings.clientFolderId);
+    if (!folder) return showStart();
+    App.state.currentFolderId = folder.id;
+    App.ui.el('clientFolderTitle').textContent = folder.name;
+    viewCache.clientProducts = await App.products.listByFolder(folder.id);
+    await renderClientProducts();
+  }
+
+  async function changeStock(productId, delta, clickedButton) {
+    if (clickedButton) clickedButton.disabled = true;
+    try {
+      const product = await App.products.get(productId);
+      if (!product) throw new Error('El producto ya no existe.');
+      if (delta < 0 && product.stock <= 0) {
+        App.ui.toast('⚠️ El stock ya está en 0', 'warning');
+        return;
+      }
+      await App.products.changeStock(productId, delta);
+      App.ui.toast('✅ Stock actualizado', 'success');
+      await refreshCurrentFolder();
+    } catch (error) {
+      console.error('Error al cambiar stock:', error);
+      App.ui.toast(`❌ ${error.message || 'No se pudo actualizar el stock'}`, 'error');
+    } finally {
+      if (clickedButton?.isConnected) clickedButton.disabled = false;
+    }
+  }
+
+  async function handleAction(actionElement) {
+    const action = actionElement.dataset.action;
+    switch (action) {
+      case 'enter-client':
+        await enterClient();
+        break;
+      case 'open-admin-login':
+      case 'client-admin-unlock':
+        openAdminLogin();
+        break;
+      case 'logout-admin':
+        await showStart();
+        break;
+      case 'open-settings':
+        await App.settings.openSettingsModal();
+        break;
+      case 'create-folder':
+        App.folders.openCreateModal();
+        break;
+      case 'rename-folder':
+        await App.folders.openRenameModal(actionElement.dataset.folderId);
+        break;
+      case 'delete-folder':
+        await App.folders.confirmRemove(actionElement.dataset.folderId);
+        break;
+      case 'open-folder':
+        await openFolder(actionElement.dataset.folderId);
+        break;
+      case 'back-admin':
+        App.state.currentMode = 'admin';
+        App.state.currentFolderId = null;
+        App.utils.revokeObjectUrls();
+        App.ui.showScreen('adminScreen');
+        await refreshAdmin();
+        break;
+      case 'create-product':
+        if (App.state.currentFolderId) await App.products.openProductModal(App.state.currentFolderId, null);
+        break;
+      case 'edit-product':
+        await App.products.openProductModal(App.state.currentFolderId, actionElement.dataset.productId);
+        break;
+      case 'delete-product':
+        await App.products.confirmRemove(actionElement.dataset.productId);
+        break;
+      case 'stock-plus':
+        await changeStock(actionElement.dataset.productId, 1, actionElement);
+        break;
+      case 'stock-minus':
+        await changeStock(actionElement.dataset.productId, -1, actionElement);
+        break;
+      case 'clear-folder-search':
+        App.ui.el('folderSearchInput').value = '';
+        renderFoldersFromCache();
+        App.ui.el('folderSearchInput').focus();
+        break;
+      case 'clear-product-search':
+        App.ui.el('productSearchInput').value = '';
+        await renderCurrentProducts();
+        App.ui.el('productSearchInput').focus();
+        break;
+      case 'clear-client-search':
+        App.ui.el('clientSearchInput').value = '';
+        await renderClientProducts();
+        App.ui.el('clientSearchInput').focus();
+        break;
+      default:
+        break;
+    }
+  }
+
+  function bindEvents() {
+    document.addEventListener('click', async (event) => {
+      const actionElement = event.target.closest('[data-action]');
+      if (!actionElement || !App.state.initialized) return;
+      try { await handleAction(actionElement); }
+      catch (error) {
+        console.error('Error al ejecutar acción:', actionElement.dataset.action, error);
+        App.ui.toast('❌ Ocurrió un error inesperado', 'error');
+      }
+    });
+
+    document.addEventListener('keydown', async (event) => {
+      if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('[data-action="open-folder"][role="button"]')) {
+        event.preventDefault();
+        await openFolder(event.target.dataset.folderId);
+      }
+    });
+
+    App.ui.el('folderSearchInput').addEventListener('input', renderFoldersFromCache);
+    App.ui.el('productSearchInput').addEventListener('input', () => renderCurrentProducts().catch(console.error));
+    App.ui.el('productSortSelect').addEventListener('change', () => renderCurrentProducts().catch(console.error));
+    App.ui.el('clientSearchInput').addEventListener('input', () => renderClientProducts().catch(console.error));
+    App.backup.bindRestoreInput();
+
+    window.addEventListener('beforeunload', () => App.utils.revokeObjectUrls());
+  }
+
+  async function initialize() {
+    try {
+      App.ui.showScreen('loadingScreen');
+      await App.db.open();
+      await App.db.initializeDefaults();
+      applyBranding();
+      bindEvents();
+      App.state.initialized = true;
+
+      if (App.state.settings.autoClientMode && App.state.settings.clientFolderId) {
+        const entered = await enterClient();
+        if (!entered) await showStart();
+      } else {
+        await showStart();
+      }
+    } catch (error) {
+      console.error('Error fatal al iniciar Mi Inventario:', error);
+      App.state.initialized = false;
+      const loading = App.ui.el('loadingScreen');
+      if (loading) {
+        loading.innerHTML = `
+          <div class="loading-card">
+            <div class="brand-mark">⚠️</div>
+            <h1>No se pudo iniciar</h1>
+            <p>${App.utils.escapeHtml(error.message || 'Error desconocido')}</p>
+            <p class="muted">Prueba cerrando otras pestañas de la aplicación y vuelve a abrir index.html.</p>
+          </div>
+        `;
+      }
+    }
+  }
+
+  App.app = {
+    initialize,
+    applyBranding,
+    refreshAdmin,
+    refreshCurrentFolder,
+    refreshClient,
+    enterAdmin,
+    enterClient,
+    showStart
+  };
+
+  document.addEventListener('DOMContentLoaded', initialize, { once: true });
+})();
+
+
+================================================================================
+README.txt
+================================================================================
+MI INVENTARIO
+=============
+
+Inicio rápido
+-------------
+1. Mantén la estructura de carpetas tal como está.
+2. Abre index.html con Google Chrome o Microsoft Edge.
+3. Contraseña inicial del administrador: 1234
+4. Los datos se guardan localmente en IndexedDB del navegador.
+5. Usa Configuración > Crear copia de seguridad para exportar tus datos a JSON.
+
+Importante
+----------
+- No borres los datos del sitio/navegador si quieres conservar el inventario local.
+- Cada navegador/perfil mantiene su propia base de datos local.
+- La contraseña controla el acceso dentro de esta aplicación local; no sustituye la seguridad de un servidor.
+
