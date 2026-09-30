@@ -21,21 +21,81 @@
     return products.some((product) => product.id !== excludeId && product.codeKey === key);
   }
 
-  function validateImage(file) {
-    if (!file) return;
-    if (!file.type || !file.type.startsWith('image/')) throw new Error('Selecciona un archivo de imagen válido.');
-    if (file.size > MAX_IMAGE_BYTES) throw new Error('La imagen es demasiado grande. Máximo 8 MB.');
+  function getImageBlob(source) {
+    if (!source) return null;
+    if (source.blob instanceof Blob) return source.blob;
+    if (source instanceof Blob) return source;
+    return null;
   }
 
-  async function saveImage(file) {
-    if (!file) return null;
-    validateImage(file);
+  function validateImage(source) {
+    if (!source) return;
+    const blob = getImageBlob(source);
+    if (!blob) throw new Error('Selecciona un archivo de imagen válido.');
+    const type = source.type || blob.type || '';
+    if (!type || !type.startsWith('image/')) throw new Error('Selecciona un archivo de imagen válido.');
+    if (blob.size > MAX_IMAGE_BYTES) throw new Error('La imagen es demasiado grande. Máximo 8 MB.');
+    if (blob.size <= 0) throw new Error('La imagen seleccionada está vacía o no se pudo leer.');
+  }
+
+  function blobToArrayBuffer(blob) {
+    if (blob && typeof blob.arrayBuffer === 'function') {
+      return blob.arrayBuffer();
+    }
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error || new Error('No se pudo leer la imagen seleccionada.'));
+      reader.readAsArrayBuffer(blob);
+    });
+  }
+
+  // En algunos móviles Android, el File recibido desde el selector de fotos
+  // puede apuntar a un recurso temporal del sistema. IndexedDB puede rechazarlo
+  // con "Failed to write blobs (invalid blob)". Para evitarlo, copiamos sus
+  // bytes a memoria y creamos un Blob nuevo y estable antes de previsualizar
+  // o guardar la imagen.
+  async function prepareImage(source) {
+    if (!source) return null;
+    if (source.__inventoryPrepared && source.blob instanceof Blob) return source;
+
+    const originalBlob = getImageBlob(source);
+    validateImage(source);
+
+    let buffer;
+    try {
+      buffer = await blobToArrayBuffer(originalBlob);
+    } catch (error) {
+      console.error('Error al leer la imagen seleccionada:', error);
+      throw new Error('No se pudo leer la imagen. Prueba seleccionándola desde Galería o Archivos.');
+    }
+
+    if (!buffer || buffer.byteLength <= 0) {
+      throw new Error('No se pudo leer el contenido de la imagen.');
+    }
+
+    const type = source.type || originalBlob.type || 'image/jpeg';
+    const stableBlob = new Blob([buffer], { type });
+    if (stableBlob.size <= 0) throw new Error('No se pudo preparar la imagen para guardarla.');
+
+    return {
+      __inventoryPrepared: true,
+      blob: stableBlob,
+      type,
+      name: source.name || 'imagen',
+      size: stableBlob.size
+    };
+  }
+
+  async function saveImage(source) {
+    if (!source) return null;
+    const prepared = await prepareImage(source);
     const newImageId = App.utils.uid('image');
     await App.db.put('images', {
       id: newImageId,
-      blob: file,
-      type: file.type,
-      name: file.name || 'imagen',
+      blob: prepared.blob,
+      type: prepared.type,
+      name: prepared.name || 'imagen',
       createdAt: App.utils.now()
     });
     return newImageId;
@@ -247,29 +307,59 @@
         const saveButton = modal.querySelector('[data-save-product]');
         modal.querySelector('[data-modal-cancel]').addEventListener('click', App.ui.closeModal);
 
-        imageInput.addEventListener('change', () => {
+        let preparedImage = null;
+        let imagePreparing = false;
+
+        imageInput.addEventListener('change', async () => {
           const file = imageInput.files?.[0];
-          if (!file) return;
+          preparedImage = null;
+          if (!file) {
+            preview.textContent = product && product.imageId
+              ? 'Imagen actual conservada si no eliges otra.'
+              : 'Vista previa';
+            return;
+          }
+
           try {
-            validateImage(file);
-            const reader = new FileReader();
-            reader.onload = () => { preview.innerHTML = `<img src="${reader.result}" alt="Vista previa">`; };
-            reader.onerror = () => App.ui.toast('❌ No se pudo previsualizar la imagen', 'error');
-            reader.readAsDataURL(file);
+            imagePreparing = true;
+            preview.textContent = 'Preparando imagen…';
+            preparedImage = await prepareImage(file);
+            const dataUrl = await App.utils.blobToDataURL(preparedImage.blob);
+            preview.innerHTML = `<img src="${dataUrl}" alt="Vista previa">`;
           } catch (error) {
+            console.error('Error al preparar vista previa:', error);
+            preparedImage = null;
             imageInput.value = '';
-            App.ui.toast(`⚠️ ${error.message}`, 'warning');
+            preview.textContent = 'No se pudo cargar la imagen.';
+            App.ui.toast(`⚠️ ${error.message || 'No se pudo previsualizar la imagen'}`, 'warning');
+          } finally {
+            imagePreparing = false;
           }
         });
 
         form.addEventListener('submit', async (event) => {
           event.preventDefault();
-          const imageFile = imageInput.files?.[0] || null;
+
+          if (imagePreparing) {
+            App.ui.toast('⏳ Espera un momento mientras se prepara la imagen.', 'warning');
+            return;
+          }
+
+          const selectedRawFile = imageInput.files?.[0] || null;
+          if (selectedRawFile && !preparedImage) {
+            try {
+              preparedImage = await prepareImage(selectedRawFile);
+            } catch (error) {
+              App.ui.toast(`⚠️ ${error.message || 'No se pudo leer la imagen'}`, 'warning');
+              return;
+            }
+          }
+
           const data = {
             name: modal.querySelector('#productNameInput').value,
             code: modal.querySelector('#productCodeInput').value,
             stock: modal.querySelector('#productStockInput').value,
-            imageFile
+            imageFile: preparedImage
           };
 
           try {
