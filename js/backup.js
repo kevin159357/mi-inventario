@@ -172,9 +172,19 @@
     const input = App.ui.el('restoreFileInput');
     if (!input) return;
     input.addEventListener('change', async () => {
-      const file = input.files?.[0];
+      const files = Array.from(input.files || []);
       input.value = '';
-      if (file) await handleRestoreFile(file);
+      if (!files.length) return;
+      if (files.some((item) => /\.zip$/i.test(item.name))) {
+        try {
+          if (files.some((item) => !/\.zip$/i.test(item.name))) throw new Error('Selecciona solo los ZIP de un mismo respaldo.');
+          await App.backup.handleZipFiles(files);
+        } catch (error) {
+          console.error('Error al restaurar ZIP:', error);
+          App.ui.toast(`❌ ${error.message || 'No se pudo restaurar ZIP'}`, 'error');
+        }
+      } else if (files.length === 1) await handleRestoreFile(files[0]);
+      else App.ui.toast('⚠️ Selecciona un JSON, o todas las partes ZIP juntas.', 'warning');
     });
   }
 

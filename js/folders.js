@@ -69,10 +69,6 @@
 
     await App.db.remove('folders', id);
 
-    if (App.state.settings.clientFolderId === id) {
-      App.state.settings.clientFolderId = null;
-      await App.db.setConfig('settings', App.state.settings);
-    }
   }
 
   function openCreateModal() {

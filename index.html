@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#111827">
   <title>Mi Inventario</title>
-  <link rel="stylesheet" href="css/styles.css">
-  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/styles.css?v=1.2.1">
+  <link rel="stylesheet" href="css/components.css?v=1.2.1">
 </head>
 <body>
   <div id="appShell" class="app-shell" aria-live="polite">
@@ -22,7 +22,7 @@
     <div id="startScreen" class="screen screen--centered" hidden>
       <section class="welcome-card">
         <div class="brand-mark brand-mark--large">📦</div>
-        <p class="eyebrow">Inventario local</p>
+        <p class="eyebrow">Inventario local <span class="version-chip">v1.2.1 · PRUEBAS</span></p>
         <h1 id="startAppName">Mi Inventario</h1>
         <p class="muted">Elige cómo quieres entrar.</p>
         <div class="stack stack--lg">
@@ -35,7 +35,7 @@
     <div id="adminScreen" class="screen" hidden>
       <header class="topbar">
         <div>
-          <p class="eyebrow">Administrador</p>
+          <p class="eyebrow">Administrador <span class="version-chip">v1.2.1</span></p>
           <h1 id="adminAppName">Mi Inventario</h1>
         </div>
         <div class="topbar__actions">
@@ -82,7 +82,7 @@
         <div class="topbar__leading">
           <button class="icon-btn" data-action="back-admin" aria-label="Volver">←</button>
           <div>
-            <p class="eyebrow">Inventario</p>
+            <p class="eyebrow">Inventario <span class="version-chip">v1.2.1</span></p>
             <h1 id="folderInventoryTitle">Carpeta</h1>
           </div>
         </div>
@@ -96,23 +96,48 @@
             <input id="productSearchInput" type="search" placeholder="Buscar por nombre o código…" autocomplete="off">
             <button class="search-clear" type="button" data-action="clear-product-search" aria-label="Limpiar búsqueda">✕</button>
           </label>
-          <select id="productSortSelect" class="select-control" aria-label="Ordenar productos">
-            <option value="name-asc">Nombre A-Z</option>
-            <option value="name-desc">Nombre Z-A</option>
-            <option value="stock-desc">Mayor stock</option>
-            <option value="stock-asc">Menor stock</option>
-            <option value="updated-desc">Última modificación</option>
-          </select>
+          <p class="order-hint">☰ Mantén pulsado el controlador de una lámina y arrástrala para cambiar su posición.</p>
         </div>
         <div id="productGrid" class="product-grid"></div>
       </main>
     </div>
 
-    <div id="clientScreen" class="screen" hidden>
+    <div id="clientFoldersScreen" class="screen" hidden>
       <header class="topbar topbar--sticky">
         <div>
-          <p class="eyebrow">Modo cliente</p>
-          <h1 id="clientFolderTitle">Productos</h1>
+          <p class="eyebrow">Modo cliente · Solo visualización <span class="version-chip">v1.2.1</span></p>
+          <h1>Mostrario de carpetas</h1>
+        </div>
+        <button class="icon-btn" title="Entrar como administrador" aria-label="Entrar como administrador" data-action="client-admin-unlock">🔒</button>
+      </header>
+      <main class="content">
+        <section class="section-block">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Explorar</p>
+              <h2>Todas las carpetas</h2>
+            </div>
+          </div>
+          <div class="toolbar">
+            <label class="search-field">
+              <span>🔎</span>
+              <input id="clientFolderSearchInput" type="search" placeholder="Buscar carpeta…" autocomplete="off">
+              <button class="search-clear" type="button" data-action="clear-client-folder-search" aria-label="Limpiar búsqueda">✕</button>
+            </label>
+          </div>
+          <div id="clientFolderGrid" class="folder-grid folder-grid--client"></div>
+        </section>
+      </main>
+    </div>
+
+    <div id="clientScreen" class="screen" hidden>
+      <header class="topbar topbar--sticky">
+        <div class="topbar__leading">
+          <button class="icon-btn" data-action="back-client-folders" aria-label="Volver a carpetas" title="Volver a carpetas">←</button>
+          <div>
+            <p class="eyebrow">Modo cliente · Solo visualización <span class="version-chip">v1.2.1</span></p>
+            <h1 id="clientFolderTitle">Productos</h1>
+          </div>
         </div>
         <button class="icon-btn" title="Entrar como administrador" aria-label="Entrar como administrador" data-action="client-admin-unlock">🔒</button>
       </header>
@@ -132,15 +157,17 @@
   <div id="modalRoot" class="modal-root" aria-live="assertive"></div>
   <div id="toastRoot" class="toast-root" aria-live="polite"></div>
 
-  <input id="restoreFileInput" type="file" accept="application/json,.json" hidden>
+  <input id="restoreFileInput" type="file" accept=".json,.zip,application/json,application/zip" multiple hidden>
+  <input id="verifyBackupFileInput" type="file" accept=".zip,application/zip" multiple hidden>
 
-  <script src="js/namespace.js"></script>
-  <script src="js/database.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/folders.js"></script>
-  <script src="js/products.js"></script>
-  <script src="js/settings.js"></script>
-  <script src="js/backup.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/namespace.js?v=1.2.1"></script>
+  <script src="js/database.js?v=1.2.1"></script>
+  <script src="js/ui.js?v=1.2.1"></script>
+  <script src="js/folders.js?v=1.2.1"></script>
+  <script src="js/products.js?v=1.2.1"></script>
+  <script src="js/settings.js?v=1.2.1"></script>
+  <script src="js/backup.js?v=1.2.1"></script>
+  <script src="js/backup-zip.js?v=1.2.1"></script>
+  <script src="js/app.js?v=1.2.1"></script>
 </body>
 </html>

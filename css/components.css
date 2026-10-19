@@ -115,3 +115,42 @@
   .folder-card { grid-template-columns: 1fr; }
   .folder-card__actions { flex-direction: row; position: absolute; right: 14px; top: 14px; }
 }
+
+/* Mi Inventario 1.1: imagen completa, rotación, reportes y orden táctil */
+.product-image-wrap { display:block; width:100%; padding:0; border:0; text-align:initial; cursor:zoom-in; }
+.product-image--rotated { object-fit:contain; transform:rotate(var(--rotation)) scale(var(--image-scale)); }
+.product-reorder { display:flex; justify-content:flex-end; margin-top:12px; }
+.reorder-handle { width:100%; min-height:42px; border:1px dashed #b3b8ca; border-radius:12px; background:#f7f8ff; color:#344054; font-weight:800; cursor:grab; touch-action:none; user-select:none; -webkit-user-select:none; }
+.product-card--dragging { opacity:.75; outline:3px solid var(--primary); box-shadow:var(--shadow-md); }
+.order-hint { margin:0; color:var(--muted); font-size:.82rem; flex:1 1 100%; }
+.rotation-controls { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.rotation-controls .btn { min-height:46px; padding-inline:8px; font-size:.85rem; }
+.image-preview img { object-fit:contain; }
+.image-lightbox { position:fixed; inset:0; z-index:3500; background:#090d18; color:#fff; display:flex; flex-direction:column; }
+.image-lightbox__bar { min-height:62px; padding:calc(8px + env(safe-area-inset-top)) 16px 9px; display:flex; justify-content:space-between; align-items:center; gap:14px; background:#111827; }
+.image-lightbox__bar strong { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.image-lightbox__close { flex:0 0 46px; height:46px; border:0; border-radius:13px; background:#30394c; color:#fff; font-size:1.25rem; }
+.image-lightbox__stage { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; overflow:hidden; padding-bottom:env(safe-area-inset-bottom); }
+.image-lightbox__stage img { display:block; max-width:none; max-height:none; object-fit:contain; }
+.stat-card--interactive { width:100%; text-align:left; font:inherit; color:inherit; cursor:pointer; }
+.stat-card--interactive:focus-visible { outline:3px solid var(--primary); }
+.stock-report-group { border:1px solid var(--border); border-radius:13px; margin-top:12px; overflow:hidden; }
+.stock-report-group summary { padding:15px; display:flex; justify-content:space-between; gap:8px; background:var(--surface-2); cursor:pointer; }
+.stock-report-group summary strong { color:var(--primary); }
+.stock-report-list { padding:0 13px; }
+.stock-report-row { padding:12px 0; display:flex; justify-content:space-between; align-items:center; gap:12px; border-top:1px solid var(--border); }
+.stock-report-row div { min-width:0; overflow-wrap:anywhere; }
+.stock-report-row small { display:block; margin-top:3px; color:var(--muted); }
+.stock-report-row .stock-badge { white-space:nowrap; }
+.backup-status { padding:12px; border:1px solid var(--border); border-radius:12px; background:var(--surface-2); font-size:.9rem; overflow-wrap:anywhere; }
+.backup-actions { display:grid; gap:10px; }
+
+/* Mostrario para clientes: navegación libre entre carpetas, solo lectura */
+.folder-card--readonly { grid-template-columns: 1fr; padding: 0; }
+.folder-card--readonly .folder-card__main { padding: 20px; border-radius: inherit; }
+.folder-card--readonly .folder-card__main:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.folder-card--readonly .folder-card__main:active { background: #eef2ff; }
+#clientFoldersScreen .section-heading { margin-bottom: 18px; }
+
+/* Marca visible para reconocer un despliegue nuevo y verificar caché */
+.version-chip { display:inline-block; margin-left:.4rem; padding:.12rem .45rem; border-radius:999px; background:#e7efff; color:#1754b8; font-size:.7rem; font-weight:800; letter-spacing:0; vertical-align:middle; }

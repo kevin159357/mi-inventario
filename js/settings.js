@@ -12,7 +12,6 @@
       ...nextSettings,
       appName: String(nextSettings.appName ?? App.state.settings.appName).trim() || 'Mi Inventario',
       lowStockLimit: App.utils.clampInt(nextSettings.lowStockLimit ?? App.state.settings.lowStockLimit, 0, 999999),
-      clientFolderId: nextSettings.clientFolderId || null,
       autoClientMode: Boolean(nextSettings.autoClientMode)
     };
     await App.db.setConfig('settings', normalized);
@@ -34,12 +33,7 @@
   }
 
   async function openSettingsModal() {
-    const folders = await App.folders.list();
     const settings = App.state.settings;
-    const folderOptions = [
-      '<option value="">— Sin carpeta asignada —</option>',
-      ...folders.map((folder) => `<option value="${folder.id}" ${settings.clientFolderId === folder.id ? 'selected' : ''}>${App.utils.escapeHtml(folder.name)}</option>`)
-    ].join('');
 
     App.ui.openModal({
       eyebrow: 'Administrador',
@@ -62,19 +56,17 @@
 
           <div class="divider"></div>
           <h3 class="settings-title">Cliente</h3>
-          <div class="form-row">
-            <label for="settingsClientFolder">Carpeta visible para el cliente</label>
-            <select id="settingsClientFolder">${folderOptions}</select>
-          </div>
+          <p class="form-hint">El modo cliente muestra automáticamente todas las carpetas, sin permitir editarlas.</p>
           <label class="checkbox-row" for="settingsAutoClient">
-            <span><strong>Iniciar automáticamente en modo cliente</strong><br><span class="form-hint">Solo funciona si existe una carpeta asignada.</span></span>
+            <span><strong>Iniciar automáticamente en modo cliente</strong><br><span class="form-hint">Abre directamente el mostrario con todas las carpetas.</span></span>
             <input id="settingsAutoClient" type="checkbox" ${settings.autoClientMode ? 'checked' : ''}>
           </label>
 
           <div class="divider"></div>
           <h3 class="settings-title">Copia de seguridad</h3>
           <div class="stack">
-            <button class="btn btn--secondary btn--block" type="button" data-settings-backup>💾 Crear copia de seguridad</button>
+            <button class="btn btn--secondary btn--block" type="button" data-settings-backup>💾 Crear copia de seguridad ZIP por partes</button>
+            <button class="btn btn--secondary btn--block" type="button" data-settings-verify-backup>✅ Comprobar ZIP descargado (sin restaurar)</button>
             <button class="btn btn--secondary btn--block" type="button" data-settings-restore>📥 Restaurar copia de seguridad</button>
           </div>
 
@@ -121,11 +113,16 @@
         });
 
         modal.querySelector('[data-settings-backup]').addEventListener('click', async () => {
-          try { await App.backup.download(); }
+          try { await App.backup.openZipBackupModal(); }
           catch (error) {
             console.error('Error al crear backup:', error);
             App.ui.toast('❌ No se pudo crear la copia de seguridad', 'error');
           }
+        });
+
+        modal.querySelector('[data-settings-verify-backup]').addEventListener('click', () => {
+          App.ui.closeModal();
+          App.backup.chooseVerifyFiles();
         });
 
         modal.querySelector('[data-settings-restore]').addEventListener('click', () => {
@@ -161,7 +158,6 @@
             await saveSettings({
               appName: modal.querySelector('#settingsAppName').value,
               lowStockLimit: modal.querySelector('#settingsLowStock').value,
-              clientFolderId: modal.querySelector('#settingsClientFolder').value || null,
               autoClientMode: modal.querySelector('#settingsAutoClient').checked
             });
             App.ui.closeModal();

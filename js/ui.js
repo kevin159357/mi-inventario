@@ -11,7 +11,7 @@
   }
 
   function showScreen(screenId) {
-    ['loadingScreen', 'startScreen', 'adminScreen', 'folderInventoryScreen', 'clientScreen']
+    ['loadingScreen', 'startScreen', 'adminScreen', 'folderInventoryScreen', 'clientFoldersScreen', 'clientScreen']
       .forEach((id) => {
         const node = el(id);
         if (!node) return;

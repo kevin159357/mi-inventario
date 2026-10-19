@@ -101,6 +101,39 @@
     return newImageId;
   }
 
+  function manualOrder(products) {
+    return [...products].sort((a, b) => {
+      const aSet = Number.isFinite(a.sortOrder), bSet = Number.isFinite(b.sortOrder);
+      if (aSet && bSet && a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+      // Instalaciones antiguas: orden de ingreso, no alfabético.
+      return String(a.createdAt || '').localeCompare(String(b.createdAt || '')) || String(a.id).localeCompare(String(b.id));
+    });
+  }
+
+  async function ensureFolderOrder(folderId) {
+    const rows = manualOrder(await listByFolder(folderId));
+    if (rows.some((p, index) => p.sortOrder !== index)) {
+      await App.db.putMany('products', rows.map((p, index) => ({ ...p, sortOrder: index })));
+    }
+    return rows;
+  }
+
+  async function setCustomOrder(folderId, orderedIds) {
+    const products = await listByFolder(folderId);
+    const originalIds = new Set(products.map((p) => p.id));
+    if (originalIds.size !== orderedIds.length || new Set(orderedIds).size !== orderedIds.length ||
+        !orderedIds.every((id) => originalIds.has(id))) {
+      throw new Error('El orden no coincide con los productos de la carpeta.');
+    }
+    const lookup = new Map(products.map((p) => [p.id, p]));
+    await App.db.putMany('products', orderedIds.map((id, index) => ({ ...lookup.get(id), sortOrder: index })));
+  }
+
+  function safeRotation(value) {
+    const rotation = Number(value);
+    return [0, 90, 180, 270].includes(rotation) ? rotation : 0;
+  }
+
   async function create(folderId, data) {
     const name = String(data.name || '').trim();
     const code = String(data.code || '').trim();
@@ -109,6 +142,7 @@
     if (!code) throw new Error('El código no puede estar vacío.');
     if (await codeExists(folderId, code, null)) throw new Error('Ya existe un producto con ese código en esta carpeta.');
 
+    const existing = await ensureFolderOrder(folderId);
     const imageId = await saveImage(data.imageFile);
     const timestamp = App.utils.now();
     const product = {
@@ -119,6 +153,8 @@
       codeKey: App.utils.normalize(code),
       stock,
       imageId,
+      imageRotation: safeRotation(data.imageRotation),
+      sortOrder: existing.length,
       createdAt: timestamp,
       updatedAt: timestamp
     };
@@ -157,6 +193,7 @@
       codeKey: App.utils.normalize(code),
       stock,
       imageId,
+      imageRotation: safeRotation(data.imageRotation ?? product.imageRotation),
       updatedAt: App.utils.now()
     };
 
@@ -197,15 +234,57 @@
     return App.utils.trackObjectUrl(URL.createObjectURL(image.blob));
   }
 
-  function sortProducts(products, sortValue) {
-    const result = [...products];
-    switch (sortValue) {
-      case 'name-desc': return result.sort((a, b) => b.name.localeCompare(a.name, 'es', { sensitivity: 'base' }));
-      case 'stock-desc': return result.sort((a, b) => b.stock - a.stock || a.name.localeCompare(b.name, 'es'));
-      case 'stock-asc': return result.sort((a, b) => a.stock - b.stock || a.name.localeCompare(b.name, 'es'));
-      case 'updated-desc': return result.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
-      default: return result.sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
+  function sortProducts(products) {
+    return manualOrder(products);
+  }
+
+  async function openImageViewer(productId) {
+    const product = await get(productId);
+    if (!product || !product.imageId) {
+      App.ui.toast('⚠️ Esta lámina no tiene imagen.', 'warning');
+      return;
     }
+    const url = await loadImageUrl(product.imageId);
+    if (!url) throw new Error('No se pudo abrir la imagen.');
+    const rotation = safeRotation(product.imageRotation);
+    const overlay = document.createElement('section');
+    overlay.className = 'image-lightbox';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Imagen ampliada');
+    overlay.innerHTML = `
+      <header class="image-lightbox__bar">
+        <strong>${App.utils.escapeHtml(product.name)}</strong>
+        <button type="button" class="image-lightbox__close" aria-label="Cerrar imagen">✕</button>
+      </header>
+      <div class="image-lightbox__stage"><img src="${url}" alt="${App.utils.escapeHtml(product.name)}"></div>
+    `;
+    const image = overlay.querySelector('img');
+    const stage = overlay.querySelector('.image-lightbox__stage');
+    const fitImage = () => {
+      const w = image.naturalWidth || 1, h = image.naturalHeight || 1;
+      const maxW = Math.max(1, stage.clientWidth - 20), maxH = Math.max(1, stage.clientHeight - 20);
+      const swap = rotation % 180 !== 0;
+      const factor = Math.min(maxW / (swap ? h : w), maxH / (swap ? w : h), 2);
+      image.style.width = `${Math.round(w * factor)}px`;
+      image.style.height = `${Math.round(h * factor)}px`;
+      image.style.transform = `rotate(${rotation}deg)`;
+    };
+    const close = () => {
+      window.removeEventListener('resize', fitImage);
+      document.removeEventListener('keydown', onKey);
+      overlay.remove();
+      try { URL.revokeObjectURL(url); } catch (_) {}
+      App.state.objectUrls.delete(url);
+    };
+    const onKey = (event) => { if (event.key === 'Escape') close(); };
+    image.addEventListener('load', fitImage, { once: true });
+    overlay.querySelector('button').addEventListener('click', close);
+    overlay.addEventListener('click', (event) => { if (event.target === stage) close(); });
+    document.addEventListener('keydown', onKey);
+    window.addEventListener('resize', fitImage);
+    document.body.appendChild(overlay);
+    overlay.querySelector('button').focus();
   }
 
   async function renderProducts(target, products, options) {
@@ -222,9 +301,9 @@
       card.className = `product-card ${status.key === 'out' ? 'product-card--out' : ''}`;
       card.dataset.productId = product.id;
       card.innerHTML = `
-        <div class="product-image-wrap" data-image-slot>
+        <button type="button" class="product-image-wrap" data-action="view-image" data-product-id="${product.id}" data-image-slot aria-label="Ver imagen completa de ${App.utils.escapeHtml(product.name)}">
           <div class="product-placeholder">🖼️</div>
-        </div>
+        </button>
         <div class="product-card__body">
           <h3>${App.utils.escapeHtml(product.name)}</h3>
           <div class="product-code">${App.utils.escapeHtml(product.code)}</div>
@@ -233,6 +312,7 @@
             <span class="stock-badge stock-badge--${status.key}">${status.label}</span>
           </div>
           ${options.isClient ? '' : `
+            <div class="product-reorder"><button type="button" class="reorder-handle" data-reorder-handle aria-label="Mantener pulsado para reordenar ${App.utils.escapeHtml(product.name)}">☰ Mover lámina</button></div>
             <div class="stock-stepper">
               <button type="button" data-action="stock-minus" data-product-id="${product.id}" aria-label="Restar stock">−</button>
               <strong>${product.stock}</strong>
@@ -251,7 +331,8 @@
         loadImageUrl(product.imageId).then((url) => {
           if (!url || !card.isConnected) return;
           const slot = card.querySelector('[data-image-slot]');
-          slot.innerHTML = `<img class="product-image" src="${url}" alt="${App.utils.escapeHtml(product.name)}">`;
+          const rotation = safeRotation(product.imageRotation);
+          slot.innerHTML = `<img class="product-image ${rotation ? 'product-image--rotated' : ''}" src="${url}" alt="${App.utils.escapeHtml(product.name)}" style="--rotation:${rotation}deg;--image-scale:${rotation % 180 ? '.72' : '1'}">`;
         }).catch((error) => console.error('Error al mostrar imagen:', error));
       }
     }
@@ -267,7 +348,12 @@
             <input id="productImageInput" type="file" accept="image/*">
             <p class="form-hint">Máximo recomendado: 8 MB.</p>
           </div>
-          <div id="productImagePreview" class="image-preview">${editing && product.imageId ? 'Imagen actual conservada si no eliges otra.' : 'Vista previa'}</div>
+          <div id="productImagePreview" class="image-preview">${editing && product.imageId ? 'Cargando imagen actual…' : 'Vista previa'}</div>
+          <div class="rotation-controls">
+            <button type="button" class="btn btn--secondary" data-rotate-left>↶ Girar izquierda</button>
+            <button type="button" class="btn btn--secondary" data-rotate-right>↷ Girar derecha</button>
+          </div>
+          <p class="form-hint">La rotación se guarda sin alterar la fotografía original.</p>
         </div>
         <div class="form-row">
           <label for="productNameInput">Nombre</label>
@@ -309,6 +395,29 @@
 
         let preparedImage = null;
         let imagePreparing = false;
+        let rotation = safeRotation(product?.imageRotation);
+        let previewUrl = null;
+        function refreshPreview() {
+          const img = preview.querySelector('img');
+          if (!img) return;
+          img.style.transform = `rotate(${rotation}deg) scale(${rotation % 180 ? 0.72 : 1})`;
+        }
+        if (product?.imageId) {
+          loadImageUrl(product.imageId).then((url) => {
+            if (!url || !modal.isConnected || preparedImage) return;
+            previewUrl = url;
+            preview.innerHTML = `<img src="${url}" alt="Imagen actual">`;
+            refreshPreview();
+          }).catch(console.error);
+        }
+        modal.querySelector('[data-rotate-left]').addEventListener('click', () => {
+          rotation = (rotation + 270) % 360;
+          refreshPreview();
+        });
+        modal.querySelector('[data-rotate-right]').addEventListener('click', () => {
+          rotation = (rotation + 90) % 360;
+          refreshPreview();
+        });
 
         imageInput.addEventListener('change', async () => {
           const file = imageInput.files?.[0];
@@ -326,6 +435,7 @@
             preparedImage = await prepareImage(file);
             const dataUrl = await App.utils.blobToDataURL(preparedImage.blob);
             preview.innerHTML = `<img src="${dataUrl}" alt="Vista previa">`;
+            refreshPreview();
           } catch (error) {
             console.error('Error al preparar vista previa:', error);
             preparedImage = null;
@@ -359,7 +469,8 @@
             name: modal.querySelector('#productNameInput').value,
             code: modal.querySelector('#productCodeInput').value,
             stock: modal.querySelector('#productStockInput').value,
-            imageFile: preparedImage
+            imageFile: preparedImage,
+            imageRotation: rotation
           };
 
           try {
@@ -407,6 +518,9 @@
 
   App.products = {
     listByFolder,
+    ensureFolderOrder,
+    setCustomOrder,
+    openImageViewer,
     get,
     create,
     update,

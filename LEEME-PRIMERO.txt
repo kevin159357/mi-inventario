@@ -1,0 +1,39 @@
+MI INVENTARIO 1.2.1 — SUBIR A GITHUB — SOLO PRUEBAS
+================================================
+
+ESTE ZIP NO CONTIENE LAS IMÁGENES DEL CLIENTE. NO SUBIR AL REPOSITORIO ORIGINAL AÚN.
+
+1. Descomprime el ZIP. NO arrastres el archivo ZIP a GitHub.
+2. Abre el repositorio DE PRUEBAS > Add file > Upload files.
+3. Entra a la carpeta descomprimida y selecciona directamente: index.html,
+   la carpeta css y la carpeta js. Puedes subir además los .txt.
+4. En la página raíz del repositorio deben quedar así:
+       index.html
+       css/styles.css
+       css/components.css
+       js/app.js
+       js/backup-zip.js
+       ...
+   Si quedan dentro de otra carpeta llamada 'mi-inventario', será incorrecto.
+5. Pulsa Commit changes. Espera a que termine Actions > Deploy pages
+   o a que el despliegue de Pages aparezca como completado.
+6. Abre la URL de prueba. Debes ver 'v1.2.1 · PRUEBAS' en la portada.
+   Si no aparece, fuerza recarga con Ctrl+F5 en PC o prueba en otra pestaña.
+7. En el modo cliente debes ver 'Mostrario de carpetas'. Si no aparece,
+   la página NO está sirviendo la versión nueva.
+
+SOLO PARA VALIDAR: abre en el navegador
+   https://TU-DOMINIO/TU-REPO/PRUEBA-VERSION-1.2.1.txt
+Si se ve un mensaje confirmando v1.2.1, GitHub publicó los archivos
+del nuevo paquete. Si NO aparece la versión en la página, revisa
+que index.html esté en la RAÍZ del repositorio que Pages publica.
+
+ATENCIÓN: las carpetas, productos y fotos se almacenan en IndexedDB
+del navegador. El ZIP solo trae el código. NO restaurar una copia antigua
+sobre una base de datos actual. Si vas a probar restauración, hazlo en
+un origen o perfil completamente independiente.
+
+Esta versión incorpora: pantalla completa, rotación visual, informes de
+stock por carpeta, reordenar láminas arrastrando, respaldos ZIP en
+partes y modo cliente con todas las carpetas. El respaldo masivo aún
+debe validarse con un conjunto grande de imágenes reales.

@@ -69,6 +69,10 @@
           database.createObjectStore('images', { keyPath: 'id' });
         }
 
+        if (!database.objectStoreNames.contains('restoreStageImages')) {
+          database.createObjectStore('restoreStageImages', { keyPath: 'id' });
+        }
+
         if (!database.objectStoreNames.contains('config')) {
           database.createObjectStore('config', { keyPath: 'key' });
         }
@@ -98,6 +102,64 @@
     const result = await requestToPromise(tx.objectStore(storeName).get(key));
     await transactionDone(tx);
     return result;
+  }
+
+  async function getAllKeys(storeName) {
+    const tx = getDb().transaction(storeName, 'readonly');
+    const keys = await requestToPromise(tx.objectStore(storeName).getAllKeys());
+    await transactionDone(tx);
+    return keys;
+  }
+
+  // Lee solo los metadatos: evita cargar simultáneamente miles de imágenes.
+  async function getImageInfoList() {
+    const tx = getDb().transaction('images', 'readonly');
+    const store = tx.objectStore('images');
+    return new Promise((resolve, reject) => {
+      const result = [];
+      tx.oncomplete = () => resolve(result);
+      tx.onerror = () => reject(tx.error || new Error('Error al consultar imágenes.'));
+      tx.onabort = () => reject(tx.error || new Error('Consulta de imágenes cancelada.'));
+      const cursor = store.openCursor();
+      cursor.onsuccess = () => {
+        const current = cursor.result;
+        if (!current) return;
+        const item = current.value;
+        result.push({ id: item.id, size: item.blob?.size || 0,
+          type: item.type || item.blob?.type || 'application/octet-stream',
+          name: item.name || 'imagen', createdAt: item.createdAt || '' });
+        current.continue();
+      };
+    });
+  }
+
+  async function putMany(storeName, values) {
+    const tx = getDb().transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    for (const value of values) store.put(value);
+    await transactionDone(tx);
+  }
+
+  // Durante la restauración ZIP, todo se prepara en un almacén temporal.
+  // La base real solo se sustituye una vez que se han validado todas las partes.
+  async function commitStagedRestore(payload) {
+    const tx = getDb().transaction(['folders', 'products', 'images', 'config', 'restoreStageImages'], 'readwrite');
+    const folders = tx.objectStore('folders');
+    const products = tx.objectStore('products');
+    const images = tx.objectStore('images');
+    const config = tx.objectStore('config');
+    const staged = tx.objectStore('restoreStageImages');
+    folders.clear(); products.clear(); images.clear(); config.clear();
+    for (const item of payload.folders) folders.put(item);
+    for (const item of payload.products) products.put(item);
+    config.put({ key: 'settings', value: payload.settings });
+    const cursor = staged.openCursor();
+    cursor.onsuccess = () => {
+      const row = cursor.result;
+      if (row) { images.put(row.value); row.continue(); }
+      else staged.clear();
+    };
+    await transactionDone(tx);
   }
 
   async function getAll(storeName) {
@@ -204,6 +266,10 @@
     open,
     get,
     getAll,
+    getAllKeys,
+    getImageInfoList,
+    putMany,
+    commitStagedRestore,
     put,
     add,
     remove,
